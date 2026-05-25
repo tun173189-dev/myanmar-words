@@ -103,12 +103,22 @@ h1 {
   font-size: 13px;
 }
 
+.test-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
 .test-entry {
   min-height: 46px;
   border-radius: 8px;
   background: #2a2f45;
   color: white;
   font-weight: 750;
+}
+
+.listen-entry {
+  background: #2f6f5e;
 }
 
 .settings-panel {

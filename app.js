@@ -30,10 +30,12 @@ var els = {
   testIntervalSelect: document.querySelector("#testIntervalSelect"),
   autoSpeakToggle: document.querySelector("#autoSpeakToggle"),
   startTestButton: document.querySelector("#startTestButton"),
+  startListeningTestButton: document.querySelector("#startListeningTestButton"),
   testPanel: document.querySelector("#testPanel"),
   testProgressText: document.querySelector("#testProgressText"),
   testWordText: document.querySelector("#testWordText"),
   speakTestButton: document.querySelector("#speakTestButton"),
+  showTestWordButton: document.querySelector("#showTestWordButton"),
   choiceList: document.querySelector("#choiceList"),
   testFeedback: document.querySelector("#testFeedback"),
   closeTestButton: document.querySelector("#closeTestButton")
@@ -51,7 +53,7 @@ var flipped = false;
 var reviewMode = false;
 var lastAutoSpokenKey = "";
 var settingsOpen = false;
-var test = { active: false, questions: [], index: 0, score: 0, answered: false };
+var test = { active: false, listening: false, showWord: true, questions: [], index: 0, score: 0, answered: false };
 var currentAudio = null;
 
 bindEvents();
@@ -81,8 +83,10 @@ function bindEvents() {
   els.testIntervalSelect.addEventListener("change", updateSettings);
   els.autoSpeakToggle.addEventListener("change", updateSettings);
   els.startTestButton.addEventListener("click", startTest);
+  els.startListeningTestButton.addEventListener("click", startListeningTest);
   els.closeTestButton.addEventListener("click", closeTest);
   els.speakTestButton.addEventListener("click", speakCurrentTestWord);
+  els.showTestWordButton.addEventListener("click", showListeningWord);
 }
 
 function loadState() {
@@ -177,7 +181,7 @@ function render() {
 function renderMode() {
   var learningHidden = test.active;
   toggleHidden(document.querySelector(".stats"), learningHidden);
-  toggleHidden(els.startTestButton, learningHidden);
+  toggleHidden(document.querySelector(".test-actions"), learningHidden);
   toggleHidden(document.querySelector(".card-area"), learningHidden);
   toggleHidden(document.querySelector(".actions"), learningHidden);
   toggleHidden(els.donePanel, learningHidden || !(state.days[today] && state.days[today].completed));
@@ -251,7 +255,14 @@ function updateRecord(word, isKnown) {
 
 function startTest() {
   var pool = getTestPool();
-  test = { active: true, questions: [], index: 0, score: 0, answered: false };
+  test = { active: true, listening: false, showWord: true, questions: [], index: 0, score: 0, answered: false };
+  for (var i = 0; i < pool.length; i += 1) test.questions.push(makeQuestion(pool[i]));
+  render();
+}
+
+function startListeningTest() {
+  var pool = getTestPool();
+  test = { active: true, listening: true, showWord: false, questions: [], index: 0, score: 0, answered: false };
   for (var i = 0; i < pool.length; i += 1) test.questions.push(makeQuestion(pool[i]));
   render();
 }
@@ -330,14 +341,16 @@ function renderTest() {
     return;
   }
   els.testProgressText.textContent = String(test.index + 1) + " / " + String(test.questions.length);
-  els.testWordText.textContent = question.word.word;
+  els.testWordText.textContent = test.listening && !test.showWord ? "听发音，选择意思" : question.word.word;
+  toggleHidden(els.showTestWordButton, !test.listening || test.showWord);
   if (!test.answered) els.testFeedback.textContent = "";
   els.choiceList.innerHTML = "";
 
   for (var i = 0; i < question.choices.length; i += 1) {
     appendChoiceButton(question.choices[i]);
   }
-  autoSpeak("test-" + question.word.id + "-" + test.index, question.word.word);
+  if (test.listening) forceAutoSpeak("listen-" + question.word.id + "-" + test.index, question.word.word);
+  else autoSpeak("test-" + question.word.id + "-" + test.index, question.word.word);
 }
 
 function appendChoiceButton(choice) {
@@ -373,6 +386,7 @@ function answerTest(choiceId) {
   window.setTimeout(function () {
     test.index += 1;
     test.answered = false;
+    test.showWord = !test.listening;
     renderTest();
   }, 850);
 }
@@ -390,6 +404,12 @@ function finishTest() {
   button.textContent = "回到今日单词";
   button.addEventListener("click", closeTest);
   els.choiceList.appendChild(button);
+}
+
+function showListeningWord() {
+  if (!test.active || !test.listening) return;
+  test.showWord = true;
+  renderTest();
 }
 
 function updateStreak() {
@@ -498,6 +518,12 @@ function setAudioStatus(text) {
 
 function autoSpeak(key, text) {
   if (!state.settings.autoSpeak || lastAutoSpokenKey === key) return;
+  lastAutoSpokenKey = key;
+  window.setTimeout(function () { speakText(text); }, 180);
+}
+
+function forceAutoSpeak(key, text) {
+  if (lastAutoSpokenKey === key) return;
   lastAutoSpokenKey = key;
   window.setTimeout(function () { speakText(text); }, 180);
 }
