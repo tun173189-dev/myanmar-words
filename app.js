@@ -420,25 +420,25 @@ function formatToday() {
 function speakCurrentWord() {
   var current = session[index];
   if (!current) return;
-  speakText(current.word, 0.76);
+  speakText(current.word);
 }
 
 function speakCurrentTestWord() {
   var question = test.questions[test.index];
   if (!question) return;
-  speakText(question.word.word, 0.76);
+  speakText(question.word.word);
 }
 
 function speakCurrentExample(event) {
   if (event && event.stopPropagation) event.stopPropagation();
   var current = session[index];
   if (!current) return;
-  speakText(current.example, 0.72);
+  speakText(current.example);
 }
 
-function speakText(text, rate) {
+function speakText(text) {
   playOnlineMyanmarAudio(text, function () {
-    speakWithSystemVoice(text, rate);
+    setAudioStatus("在线缅语发音失败，请检查网络或浏览器声音权限");
   });
 }
 
@@ -483,32 +483,6 @@ function playOnlineMyanmarAudio(text, onFail) {
   }, 2600);
 }
 
-function speakWithSystemVoice(text, rate) {
-  if (!("speechSynthesis" in window)) {
-    setAudioStatus("发音不可用，请检查浏览器声音权限");
-    return;
-  }
-  window.speechSynthesis.cancel();
-  var utterance = new SpeechSynthesisUtterance(text);
-  var voices = window.speechSynthesis.getVoices ? window.speechSynthesis.getVoices() : [];
-  for (var i = 0; i < voices.length; i += 1) {
-    var voiceText = String(voices[i].lang || "") + " " + String(voices[i].name || "");
-    if (/my|burmese|myanmar/i.test(voiceText)) {
-      utterance.voice = voices[i];
-      break;
-    }
-  }
-  utterance.lang = utterance.voice ? utterance.voice.lang : "my-MM";
-  utterance.rate = rate;
-  utterance.onstart = function () {
-    setAudioStatus(utterance.voice ? "系统缅语发音" : "系统发音");
-  };
-  utterance.onerror = function () {
-    setAudioStatus("发音失败，请检查手机声音权限");
-  };
-  window.speechSynthesis.speak(utterance);
-}
-
 function setAudioStatus(text) {
   if (!els.audioStatus) return;
   els.audioStatus.textContent = text || "";
@@ -517,7 +491,7 @@ function setAudioStatus(text) {
 function autoSpeak(key, text) {
   if (!state.settings.autoSpeak || lastAutoSpokenKey === key) return;
   lastAutoSpokenKey = key;
-  window.setTimeout(function () { speakText(text, 0.76); }, 180);
+  window.setTimeout(function () { speakText(text); }, 180);
 }
 
 function reviewMistakes() {
