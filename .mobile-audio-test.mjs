@@ -1,0 +1,752 @@
+
+window.WORDS = [
+  { id: 1, word: "မင်္ဂလာပါ", phonetic: "mingalaba", meaning: "你好", example: "မင်္ဂလာပါ၊ ကျွန်တော် အကူအညီ လိုပါတယ်။", exampleCn: "你好，我需要帮助。" },
+  { id: 2, word: "ကျေးဇူးတင်ပါတယ်", phonetic: "ce zu tin ba de", meaning: "谢谢", example: "သင့်အကူအညီအတွက် ကျေးဇူးတင်ပါတယ်။", exampleCn: "谢谢你的帮助。" },
+  { id: 3, word: "တောင်းပန်ပါတယ်", phonetic: "taung pan ba de", meaning: "对不起", example: "နောက်ကျသွားလို့ တောင်းပန်ပါတယ်။", exampleCn: "我迟到了，对不起。" },
+  { id: 4, word: "ဟုတ်ကဲ့", phonetic: "hou ke", meaning: "是的 / 好的", example: "ဟုတ်ကဲ့၊ နားလည်ပါတယ်။", exampleCn: "好的，我明白了。" },
+  { id: 5, word: "မဟုတ်ပါဘူး", phonetic: "ma hou ba bu", meaning: "不是", example: "ဒါ ကျွန်တော့်စာရွက် မဟုတ်ပါဘူး။", exampleCn: "这不是我的文件。" },
+  { id: 6, word: "နားလည်ပါတယ်", phonetic: "na le ba de", meaning: "明白", example: "သင်ပြောတာ နားလည်ပါတယ်။", exampleCn: "我明白你说的话。" },
+  { id: 7, word: "နားမလည်ပါဘူး", phonetic: "na ma le ba bu", meaning: "不明白", example: "မြန်မာလို နားမလည်ပါဘူး။", exampleCn: "我不太懂缅语。" },
+  { id: 8, word: "ဖြည်းဖြည်း ပြောပါ", phonetic: "hpye hpye pyaw ba", meaning: "请慢一点说", example: "ကျေးဇူးပြုပြီး ဖြည်းဖြည်း ပြောပါ။", exampleCn: "请慢一点说。" },
+  { id: 9, word: "ထပ်ပြောပါ", phonetic: "htat pyaw ba", meaning: "请再说一遍", example: "တစ်ခါ ထပ်ပြောပါ။", exampleCn: "请再说一遍。" },
+  { id: 10, word: "ဘယ်မှာလဲ", phonetic: "be hma le", meaning: "在哪里", example: "ရုံး ဘယ်မှာလဲ။", exampleCn: "办公室在哪里？" },
+  { id: 11, word: "ဘယ်လောက်လဲ", phonetic: "be lauk le", meaning: "多少钱", example: "ဒီဟာ ဘယ်လောက်လဲ။", exampleCn: "这个多少钱？" },
+  { id: 12, word: "လိုချင်ပါတယ်", phonetic: "lo chin ba de", meaning: "想要", example: "ရေတစ်ဘူး လိုချင်ပါတယ်။", exampleCn: "我想要一瓶水。" },
+  { id: 13, word: "မလိုပါဘူး", phonetic: "ma lo ba bu", meaning: "不需要", example: "အိတ် မလိုပါဘူး။", exampleCn: "我不需要袋子。" },
+  { id: 14, word: "အကူအညီ", phonetic: "a ku a nyi", meaning: "帮助", example: "အကူအညီ ပေးနိုင်မလား။", exampleCn: "可以帮我吗？" },
+  { id: 15, word: "ရုံး", phonetic: "yone", meaning: "办公室 / 政府部门", example: "အစိုးရရုံးကို သွားချင်ပါတယ်။", exampleCn: "我想去政府办公室。" },
+  { id: 16, word: "စာရွက်စာတမ်း", phonetic: "sa ywet sa dan", meaning: "文件 / 材料", example: "စာရွက်စာတမ်းတွေ ပြင်ဆင်ထားပါတယ်။", exampleCn: "文件材料已经准备好了。" },
+  { id: 17, word: "နိုင်ငံကူးလက်မှတ်", phonetic: "naing ngan ku let hmat", meaning: "护照", example: "နိုင်ငံကူးလက်မှတ် ပြချင်ပါတယ်။", exampleCn: "我想出示护照。" },
+  { id: 18, word: "မှတ်ပုံတင်", phonetic: "hmat pone tin", meaning: "身份证 / 登记", example: "မှတ်ပုံတင် မိတ္တူ လိုပါသလား။", exampleCn: "需要身份证复印件吗？" },
+  { id: 19, word: "လက်မှတ်", phonetic: "let hmat", meaning: "签名 / 票", example: "ဒီနေရာမှာ လက်မှတ်ထိုးပါ။", exampleCn: "请在这里签名。" },
+  { id: 20, word: "ဖောင်", phonetic: "hpoung", meaning: "表格", example: "ဒီဖောင်ကို ဖြည့်ရမလား။", exampleCn: "需要填写这张表吗？" },
+  { id: 21, word: "မိတ္တူ", phonetic: "mi tu", meaning: "复印件", example: "မိတ္တူ နှစ်စောင် လိုပါတယ်။", exampleCn: "需要两份复印件。" },
+  { id: 22, word: "တန်းစီ", phonetic: "tan si", meaning: "排队", example: "ဒီမှာ တန်းစီရပါမယ်။", exampleCn: "需要在这里排队。" },
+  { id: 23, word: "နံပါတ်", phonetic: "nan bat", meaning: "号码", example: "ကျွန်တော့်နံပါတ် ဘယ်အချိန်ခေါ်မလဲ။", exampleCn: "什么时候叫到我的号码？" },
+  { id: 24, word: "အခန်း", phonetic: "a khan", meaning: "房间", example: "အခန်း နံပါတ် သုံးကို သွားပါ။", exampleCn: "请去三号房间。" },
+  { id: 25, word: "အခကြေးငွေ", phonetic: "a kha cye ngwe", meaning: "费用", example: "အခကြေးငွေ ဘယ်လောက်ပေးရမလဲ။", exampleCn: "需要交多少费用？" },
+  { id: 26, word: "ငွေသား", phonetic: "ngwe tha", meaning: "现金", example: "ငွေသားနဲ့ ပေးလို့ရမလား။", exampleCn: "可以用现金支付吗？" },
+  { id: 27, word: "ဘဏ်ကတ်", phonetic: "ban kat", meaning: "银行卡", example: "ဘဏ်ကတ်နဲ့ ပေးလို့ရပါသလား။", exampleCn: "可以用银行卡支付吗？" },
+  { id: 28, word: "လိပ်စာ", phonetic: "leik sa", meaning: "地址", example: "လိပ်စာကို ဒီမှာရေးပါ။", exampleCn: "请把地址写在这里。" },
+  { id: 29, word: "ဖုန်းနံပါတ်", phonetic: "phone nan bat", meaning: "电话号码", example: "ဖုန်းနံပါတ် ထားခဲ့ပါ။", exampleCn: "请留下电话号码。" },
+  { id: 30, word: "ချိန်းဆိုချက်", phonetic: "chein so chet", meaning: "预约", example: "မနက်ဖြန် ချိန်းဆိုချက် ရှိပါတယ်။", exampleCn: "我明天有预约。" },
+  { id: 31, word: "ယနေ့", phonetic: "ya nei", meaning: "今天", example: "ယနေ့ လုပ်လို့ရမလား။", exampleCn: "今天可以办理吗？" },
+  { id: 32, word: "မနက်ဖြန်", phonetic: "ma net hpyan", meaning: "明天", example: "မနက်ဖြန် ပြန်လာပါမယ်။", exampleCn: "我明天再来。" },
+  { id: 33, word: "အခု", phonetic: "a khu", meaning: "现在", example: "အခု စောင့်ရမလား။", exampleCn: "现在需要等吗？" },
+  { id: 34, word: "စောင့်ပါ", phonetic: "saung ba", meaning: "请等待", example: "ခဏ စောင့်ပါ။", exampleCn: "请稍等。" },
+  { id: 35, word: "ပြီးပြီ", phonetic: "pi bi", meaning: "完成了", example: "လုပ်ငန်းစဉ် ပြီးပြီလား။", exampleCn: "流程完成了吗？" },
+  { id: 36, word: "မပြီးသေးပါဘူး", phonetic: "ma pi thay ba bu", meaning: "还没完成", example: "ဖောင် မပြီးသေးပါဘူး။", exampleCn: "表格还没填完。" },
+  { id: 37, word: "ဆေးရုံ", phonetic: "hsay yone", meaning: "医院", example: "ဆေးရုံကို သွားချင်ပါတယ်။", exampleCn: "我想去医院。" },
+  { id: 38, word: "ရဲစခန်း", phonetic: "ye sa khan", meaning: "警察局", example: "ရဲစခန်း ဘယ်မှာလဲ။", exampleCn: "警察局在哪里？" },
+  { id: 39, word: "စျေး", phonetic: "zay", meaning: "市场", example: "စျေးကို ဘယ်လိုသွားရမလဲ။", exampleCn: "市场怎么走？" },
+  { id: 40, word: "ဘတ်စ်ကား", phonetic: "bat ka", meaning: "公交车", example: "ဘတ်စ်ကားမှတ်တိုင် ဘယ်မှာလဲ။", exampleCn: "公交车站在哪里？" },
+  { id: 41, word: "တက္ကစီ", phonetic: "taxi", meaning: "出租车", example: "တက္ကစီ ခေါ်ပေးပါ။", exampleCn: "请帮我叫出租车。" },
+  { id: 42, word: "မှတ်တိုင်", phonetic: "hmat taing", meaning: "车站", example: "နောက်မှတ်တိုင်မှာ ဆင်းပါမယ်။", exampleCn: "我在下一站下车。" },
+  { id: 43, word: "ရေ", phonetic: "ye", meaning: "水", example: "ရေ တစ်ခွက် ပေးပါ။", exampleCn: "请给我一杯水。" },
+  { id: 44, word: "အစားအစာ", phonetic: "a sa a sa", meaning: "食物", example: "အစားအစာ မှာချင်ပါတယ်။", exampleCn: "我想点食物。" },
+  { id: 45, word: "မနက်စာ", phonetic: "ma net sa", meaning: "早餐", example: "မနက်စာ ရှိပါသလား။", exampleCn: "有早餐吗？" },
+  { id: 46, word: "အိမ်သာ", phonetic: "ein tha", meaning: "厕所", example: "အိမ်သာ ဘယ်မှာလဲ။", exampleCn: "厕所在哪里？" },
+  { id: 47, word: "ဈေးကြီးတယ်", phonetic: "zay gyi de", meaning: "太贵了", example: "နည်းနည်း ဈေးကြီးတယ်။", exampleCn: "有点贵。" },
+  { id: 48, word: "လျှော့ပေးပါ", phonetic: "shaut pay ba", meaning: "请便宜一点", example: "နည်းနည်း လျှော့ပေးပါ။", exampleCn: "请便宜一点。" },
+  { id: 49, word: "အရေးကြီးပါတယ်", phonetic: "a yay gyi ba de", meaning: "很重要", example: "ဒီစာရွက် အရေးကြီးပါတယ်။", exampleCn: "这份文件很重要。" },
+  { id: 50, word: "အရေးပေါ်", phonetic: "a yay paw", meaning: "紧急", example: "အရေးပေါ် အကူအညီ လိုပါတယ်။", exampleCn: "我需要紧急帮助。" }
+];
+
+window.EXTRA_WORDS = [
+  { id: 51, word: "ကျွန်တော်", phonetic: "kyun taw", meaning: "我（男性说法）", example: "ကျွန်တော် တရုတ်လူမျိုးပါ။", exampleCn: "我是中国人。" },
+  { id: 52, word: "ကျွန်မ", phonetic: "kyun ma", meaning: "我（女性说法）", example: "ကျွန်မ ဒီမှာ နေပါတယ်။", exampleCn: "我住在这里。" },
+  { id: 53, word: "ခင်ဗျား", phonetic: "khin bya", meaning: "你 / 您", example: "ခင်ဗျား နားလည်ပါသလား။", exampleCn: "您明白吗？" },
+  { id: 54, word: "သူ", phonetic: "thu", meaning: "他 / 她", example: "သူ ဒီမှာ အလုပ်လုပ်ပါတယ်။", exampleCn: "他/她在这里工作。" },
+  { id: 55, word: "ကျွန်တော်တို့", phonetic: "kyun taw doh", meaning: "我们", example: "ကျွန်တော်တို့ အတူတူ သွားမယ်။", exampleCn: "我们一起去。" },
+  { id: 56, word: "သူတို့", phonetic: "thu doh", meaning: "他们", example: "သူတို့ ရုံးထဲမှာ ရှိပါတယ်။", exampleCn: "他们在办公室里。" },
+  { id: 57, word: "ဘာလဲ", phonetic: "ba le", meaning: "是什么", example: "ဒါ ဘာလဲ။", exampleCn: "这是什么？" },
+  { id: 58, word: "ဘာကြောင့်လဲ", phonetic: "ba jaung le", meaning: "为什么", example: "ဘာကြောင့် စောင့်ရမလဲ။", exampleCn: "为什么需要等？" },
+  { id: 59, word: "ဘယ်လိုလဲ", phonetic: "be lo le", meaning: "怎么样 / 怎么做", example: "ဒီဖောင်ကို ဘယ်လို ဖြည့်ရမလဲ။", exampleCn: "这张表怎么填？" },
+  { id: 60, word: "ဘယ်သူလဲ", phonetic: "be thu le", meaning: "是谁", example: "တာဝန်ခံ ဘယ်သူလဲ။", exampleCn: "负责人是谁？" },
+  { id: 61, word: "ဘယ်အချိန်လဲ", phonetic: "be a chain le", meaning: "什么时候", example: "ဘယ်အချိန် ပြန်လာရမလဲ။", exampleCn: "什么时候需要回来？" },
+  { id: 62, word: "ဘယ်နှစ်ခုလဲ", phonetic: "be hna khu le", meaning: "几个", example: "မိတ္တူ ဘယ်နှစ်ခု လိုပါသလဲ။", exampleCn: "需要几份复印件？" },
+  { id: 63, word: "ဒီ", phonetic: "di", meaning: "这个", example: "ဒီ စာရွက် လိုပါတယ်။", exampleCn: "需要这份文件。" },
+  { id: 64, word: "အဲဒီ", phonetic: "eh di", meaning: "那个", example: "အဲဒီ အခန်းကို သွားပါ။", exampleCn: "请去那个房间。" },
+  { id: 65, word: "ဒီမှာ", phonetic: "di hma", meaning: "在这里", example: "ဒီမှာ လက်မှတ်ထိုးပါ။", exampleCn: "请在这里签名。" },
+  { id: 66, word: "အဲဒီမှာ", phonetic: "eh di hma", meaning: "在那里", example: "အဲဒီမှာ စောင့်ပါ။", exampleCn: "请在那里等。" },
+  { id: 67, word: "ရှိပါတယ်", phonetic: "shi ba de", meaning: "有 / 在", example: "ချိန်းဆိုချက် ရှိပါတယ်။", exampleCn: "我有预约。" },
+  { id: 68, word: "မရှိပါဘူး", phonetic: "ma shi ba bu", meaning: "没有 / 不在", example: "မိတ္တူ မရှိပါဘူး။", exampleCn: "我没有复印件。" },
+  { id: 69, word: "ရပါတယ်", phonetic: "ya ba de", meaning: "可以", example: "ဒီမှာ ပေးလို့ ရပါတယ်။", exampleCn: "可以在这里交。" },
+  { id: 70, word: "မရပါဘူး", phonetic: "ma ya ba bu", meaning: "不可以", example: "ဒီနေ့ မရပါဘူး။", exampleCn: "今天不可以。" },
+  { id: 71, word: "သွားမယ်", phonetic: "thwa me", meaning: "要去", example: "အစိုးရရုံးကို သွားမယ်။", exampleCn: "我要去政府办公室。" },
+  { id: 72, word: "လာမယ်", phonetic: "la me", meaning: "会来", example: "မနက်ဖြန် ပြန်လာမယ်။", exampleCn: "明天我会再来。" },
+  { id: 73, word: "ပြန်လာပါ", phonetic: "pyan la ba", meaning: "请回来 / 请再来", example: "မွန်းလွဲပိုင်း ပြန်လာပါ။", exampleCn: "请下午再来。" },
+  { id: 74, word: "ဝင်ပါ", phonetic: "win ba", meaning: "请进", example: "အခန်းထဲ ဝင်ပါ။", exampleCn: "请进房间。" },
+  { id: 75, word: "ထွက်ပါ", phonetic: "htwet ba", meaning: "请出去 / 出口", example: "ဒီတံခါးကနေ ထွက်ပါ။", exampleCn: "请从这个门出去。" },
+  { id: 76, word: "ထိုင်ပါ", phonetic: "htaing ba", meaning: "请坐", example: "ဒီမှာ ထိုင်ပါ။", exampleCn: "请坐在这里。" },
+  { id: 77, word: "ရပ်ပါ", phonetic: "yat ba", meaning: "请停 / 停下", example: "ဒီမှာ ရပ်ပါ။", exampleCn: "请在这里停。" },
+  { id: 78, word: "ရေးပါ", phonetic: "yay ba", meaning: "请写", example: "နာမည်ကို ဒီမှာ ရေးပါ။", exampleCn: "请把名字写在这里。" },
+  { id: 79, word: "ဖတ်ပါ", phonetic: "hpat ba", meaning: "请读", example: "ဒီစာကို ဖတ်ပါ။", exampleCn: "请读这段文字。" },
+  { id: 80, word: "ကြည့်ပါ", phonetic: "kyi ba", meaning: "请看", example: "ဒီနေရာကို ကြည့်ပါ။", exampleCn: "请看这个地方。" },
+  { id: 81, word: "ပေးပါ", phonetic: "pay ba", meaning: "请给", example: "စာရွက်စာတမ်း ပေးပါ။", exampleCn: "请给我文件。" },
+  { id: 82, word: "ယူပါ", phonetic: "yu ba", meaning: "请拿 / 取", example: "နံပါတ်စာရွက် ယူပါ။", exampleCn: "请拿号码纸。" },
+  { id: 83, word: "ပြပါ", phonetic: "pya ba", meaning: "请出示 / 请给看", example: "နိုင်ငံကူးလက်မှတ် ပြပါ။", exampleCn: "请出示护照。" },
+  { id: 84, word: "စစ်ပါ", phonetic: "sit ba", meaning: "请检查", example: "စာရွက်တွေ စစ်ပါ။", exampleCn: "请检查文件。" },
+  { id: 85, word: "ဖြည့်ပါ", phonetic: "hpyi ba", meaning: "请填写", example: "ဖောင်ကို ဖြည့်ပါ။", exampleCn: "请填写表格。" },
+  { id: 86, word: "လက်မှတ်ထိုးပါ", phonetic: "let hmat htoe ba", meaning: "请签名", example: "အောက်မှာ လက်မှတ်ထိုးပါ။", exampleCn: "请在下面签名。" },
+  { id: 87, word: "ပေးချေပါ", phonetic: "pay chay ba", meaning: "请付款", example: "ကောင်တာမှာ ပေးချေပါ။", exampleCn: "请在柜台付款。" },
+  { id: 88, word: "ကောင်တာ", phonetic: "counter", meaning: "柜台", example: "ကောင်တာ နံပါတ် နှစ်ကို သွားပါ။", exampleCn: "请去二号柜台。" },
+  { id: 89, word: "ဝန်ထမ်း", phonetic: "wun htan", meaning: "工作人员", example: "ဝန်ထမ်းကို မေးပါ။", exampleCn: "请问工作人员。" },
+  { id: 90, word: "တာဝန်ခံ", phonetic: "ta wun khan", meaning: "负责人", example: "တာဝန်ခံနဲ့ တွေ့ချင်ပါတယ်။", exampleCn: "我想见负责人。" },
+  { id: 91, word: "ဌာန", phonetic: "hta na", meaning: "部门", example: "လူဝင်မှုကြီးကြပ်ရေး ဌာန ဘယ်မှာလဲ။", exampleCn: "移民部门在哪里？" },
+  { id: 92, word: "လူဝင်မှုကြီးကြပ်ရေး", phonetic: "lu win hmu gyi kyat yay", meaning: "移民局 / 移民事务", example: "လူဝင်မှုကြီးကြပ်ရေးရုံးကို သွားချင်ပါတယ်။", exampleCn: "我想去移民局。" },
+  { id: 93, word: "အခွန်", phonetic: "a khun", meaning: "税", example: "အခွန်ဆောင်ရမလား။", exampleCn: "需要交税吗？" },
+  { id: 94, word: "ဘဏ်", phonetic: "ban", meaning: "银行", example: "ဘဏ် ဘယ်မှာလဲ။", exampleCn: "银行在哪里？" },
+  { id: 95, word: "ငွေလဲ", phonetic: "ngwe le", meaning: "换钱 / 兑换", example: "ငွေလဲချင်ပါတယ်။", exampleCn: "我想换钱。" },
+  { id: 96, word: "ဘောက်ချာ", phonetic: "voucher", meaning: "收据 / 凭证", example: "ဘောက်ချာ ပေးပါ။", exampleCn: "请给我收据。" },
+  { id: 97, word: "အတည်ပြု", phonetic: "a ti pyu", meaning: "确认", example: "အတည်ပြု ပေးပါ။", exampleCn: "请帮我确认。" },
+  { id: 98, word: "မိတ္တူကူး", phonetic: "mi tu ku", meaning: "复印", example: "ဒီစာရွက် မိတ္တူကူးချင်ပါတယ်။", exampleCn: "我想复印这份文件。" },
+  { id: 99, word: "ဓာတ်ပုံ", phonetic: "dat pone", meaning: "照片", example: "ဓာတ်ပုံ နှစ်ပုံ လိုပါတယ်။", exampleCn: "需要两张照片。" },
+  { id: 100, word: "အရွယ်အစား", phonetic: "a ywe a sa", meaning: "尺寸 / 大小", example: "ဓာတ်ပုံ အရွယ်အစား ဘယ်လောက်လဲ။", exampleCn: "照片尺寸是多少？" },
+  { id: 101, word: "မနက်", phonetic: "ma net", meaning: "早上", example: "မနက် ကိုးနာရီ လာပါ။", exampleCn: "请早上九点来。" },
+  { id: 102, word: "နေ့လယ်", phonetic: "nei le", meaning: "中午", example: "နေ့လယ်မှာ ပိတ်ပါတယ်။", exampleCn: "中午会关门。" },
+  { id: 103, word: "ညနေ", phonetic: "nya nay", meaning: "傍晚 / 下午晚些时候", example: "ညနေ ပြန်လာပါ။", exampleCn: "请傍晚再来。" },
+  { id: 104, word: "ည", phonetic: "nya", meaning: "晚上", example: "ညမှာ မဖွင့်ပါဘူး။", exampleCn: "晚上不开门。" },
+  { id: 105, word: "အခုချက်ချင်း", phonetic: "a khu chet chin", meaning: "马上 / 现在立刻", example: "အခုချက်ချင်း လုပ်လို့ရမလား။", exampleCn: "现在马上可以办吗？" },
+  { id: 106, word: "ခဏ", phonetic: "kha na", meaning: "一会儿", example: "ခဏ စောင့်ပါ။", exampleCn: "请稍等一会儿。" },
+  { id: 107, word: "နောက်မှ", phonetic: "nauk hma", meaning: "以后 / 稍后", example: "နောက်မှ ပြန်လာပါမယ်။", exampleCn: "我稍后再来。" },
+  { id: 108, word: "အရင်", phonetic: "a yin", meaning: "先 / 以前", example: "အရင် ဖောင်ဖြည့်ပါ။", exampleCn: "请先填表。" },
+  { id: 109, word: "ပြီးမှ", phonetic: "pi hma", meaning: "之后", example: "ပြီးမှ ကောင်တာကို သွားပါ။", exampleCn: "之后请去柜台。" },
+  { id: 110, word: "နေ့တိုင်း", phonetic: "nei taing", meaning: "每天", example: "နေ့တိုင်း ဖွင့်ပါသလား။", exampleCn: "每天都开门吗？" },
+  { id: 111, word: "တနင်္လာနေ့", phonetic: "ta nin la nei", meaning: "星期一", example: "တနင်္လာနေ့ လာပါ။", exampleCn: "请星期一来。" },
+  { id: 112, word: "သောကြာနေ့", phonetic: "thaw kya nei", meaning: "星期五", example: "သောကြာနေ့ ပိတ်ပါသလား။", exampleCn: "星期五关门吗？" },
+  { id: 113, word: "ပိတ်ပါတယ်", phonetic: "peik ba de", meaning: "关门 / 关闭", example: "ဒီနေ့ ရုံး ပိတ်ပါတယ်။", exampleCn: "今天办公室关门。" },
+  { id: 114, word: "ဖွင့်ပါတယ်", phonetic: "hpwint ba de", meaning: "开门 / 开放", example: "မနက် ကိုးနာရီ ဖွင့်ပါတယ်။", exampleCn: "早上九点开门。" },
+  { id: 115, word: "ဘယ်ဘက်", phonetic: "be bet", meaning: "左边", example: "ဘယ်ဘက်ကို ကွေ့ပါ။", exampleCn: "请往左转。" },
+  { id: 116, word: "ညာဘက်", phonetic: "nya bet", meaning: "右边", example: "ညာဘက်မှာ ရုံး ရှိပါတယ်။", exampleCn: "办公室在右边。" },
+  { id: 117, word: "ရှေ့", phonetic: "shay", meaning: "前面", example: "ရှေ့မှာ ကောင်တာ ရှိပါတယ်။", exampleCn: "前面有柜台。" },
+  { id: 118, word: "နောက်", phonetic: "nauk", meaning: "后面", example: "နောက်မှာ တန်းစီပါ။", exampleCn: "请在后面排队。" },
+  { id: 119, word: "အနီးမှာ", phonetic: "a ni hma", meaning: "附近", example: "အနီးမှာ ဘဏ် ရှိပါသလား။", exampleCn: "附近有银行吗？" },
+  { id: 120, word: "အဝေးမှာ", phonetic: "a way hma", meaning: "远处", example: "ရုံးက အဝေးမှာလား။", exampleCn: "办公室远吗？" },
+  { id: 121, word: "တည့်တည့်", phonetic: "te de", meaning: "直走", example: "တည့်တည့် သွားပါ။", exampleCn: "请直走。" },
+  { id: 122, word: "ကွေ့ပါ", phonetic: "kwe ba", meaning: "请转弯", example: "ရှေ့မှာ ညာဘက်ကို ကွေ့ပါ။", exampleCn: "前面请右转。" },
+  { id: 123, word: "အပေါ်ထပ်", phonetic: "a paw htat", meaning: "楼上", example: "အပေါ်ထပ်ကို သွားပါ။", exampleCn: "请去楼上。" },
+  { id: 124, word: "အောက်ထပ်", phonetic: "auk htat", meaning: "楼下", example: "အောက်ထပ်မှာ ပေးချေပါ။", exampleCn: "请在楼下付款。" },
+  { id: 125, word: "တံခါး", phonetic: "ta ga", meaning: "门", example: "တံခါး ဘေးမှာ စောင့်ပါ။", exampleCn: "请在门旁边等。" },
+  { id: 126, word: "လမ်း", phonetic: "lan", meaning: "路 / 街道", example: "ဒီလမ်းကနေ သွားပါ။", exampleCn: "请从这条路走。" },
+  { id: 127, word: "ကား", phonetic: "ka", meaning: "车", example: "ကား ရှိပါသလား။", exampleCn: "有车吗？" },
+  { id: 128, word: "ဆိုင်ကယ်", phonetic: "hsai ke", meaning: "摩托车", example: "ဆိုင်ကယ်နဲ့ သွားလို့ရမလား။", exampleCn: "可以骑摩托车去吗？" },
+  { id: 129, word: "လမ်းလျှောက်", phonetic: "lan shauk", meaning: "走路", example: "လမ်းလျှောက် သွားလို့ရပါတယ်။", exampleCn: "可以走路去。" },
+  { id: 130, word: "ဘယ်လောက်ကြာမလဲ", phonetic: "be lauk kya ma le", meaning: "要多久", example: "ရုံးကို ဘယ်လောက်ကြာမလဲ။", exampleCn: "去办公室要多久？" },
+  { id: 131, word: "ငါးမိနစ်", phonetic: "nga mi nit", meaning: "五分钟", example: "ငါးမိနစ် စောင့်ပါ။", exampleCn: "请等五分钟。" },
+  { id: 132, word: "တစ်နာရီ", phonetic: "ta na yi", meaning: "一小时", example: "တစ်နာရီ ကြာပါမယ်။", exampleCn: "需要一个小时。" },
+  { id: 133, word: "စျေးနှုန်း", phonetic: "zay hnon", meaning: "价格", example: "စျေးနှုန်း ဘယ်လောက်လဲ။", exampleCn: "价格是多少？" },
+  { id: 134, word: "လက်ခံပါတယ်", phonetic: "let khan ba de", meaning: "接受", example: "ဘဏ်ကတ် လက်ခံပါသလား။", exampleCn: "接受银行卡吗？" },
+  { id: 135, word: "မလက်ခံပါဘူး", phonetic: "ma let khan ba bu", meaning: "不接受", example: "ကတ် မလက်ခံပါဘူး။", exampleCn: "不接受银行卡。" },
+  { id: 136, word: "အကြွေ", phonetic: "a kywe", meaning: "零钱", example: "အကြွေ ရှိပါသလား။", exampleCn: "有零钱吗？" },
+  { id: 137, word: "ပိုက်ဆံ", phonetic: "paik hsan", meaning: "钱", example: "ပိုက်ဆံ လုံလောက်ပါသလား။", exampleCn: "钱够吗？" },
+  { id: 138, word: "ပြန်အမ်းငွေ", phonetic: "pyan an ngwe", meaning: "找零 / 退款", example: "ပြန်အမ်းငွေ ပေးပါ။", exampleCn: "请给我找零/退款。" },
+  { id: 139, word: "ဝယ်ချင်ပါတယ်", phonetic: "we chin ba de", meaning: "想买", example: "ဒီဟာ ဝယ်ချင်ပါတယ်။", exampleCn: "我想买这个。" },
+  { id: 140, word: "ကြည့်ချင်ပါတယ်", phonetic: "kyi chin ba de", meaning: "想看", example: "နောက်တစ်ခု ကြည့်ချင်ပါတယ်။", exampleCn: "我想看另一个。" },
+  { id: 141, word: "မှာချင်ပါတယ်", phonetic: "hma chin ba de", meaning: "想点 / 想订", example: "ထမင်း မှာချင်ပါတယ်။", exampleCn: "我想点米饭。" },
+  { id: 142, word: "ထမင်း", phonetic: "hta min", meaning: "米饭 / 饭", example: "ထမင်း တစ်ပွဲ ပေးပါ။", exampleCn: "请给我一份米饭。" },
+  { id: 143, word: "ဟင်း", phonetic: "hin", meaning: "菜 / 咖喱", example: "ဟင်း ဘာရှိပါသလဲ။", exampleCn: "有什么菜？" },
+  { id: 144, word: "ရေနွေး", phonetic: "ye nway", meaning: "热水", example: "ရေနွေး ပေးပါ။", exampleCn: "请给我热水。" },
+  { id: 145, word: "ရေအေး", phonetic: "ye ay", meaning: "冷水", example: "ရေအေး ရှိပါသလား။", exampleCn: "有冷水吗？" },
+  { id: 146, word: "မစားဘူး", phonetic: "ma sa bu", meaning: "不吃", example: "ငရုတ်သီး မစားဘူး။", exampleCn: "我不吃辣椒。" },
+  { id: 147, word: "စားလို့ရပါတယ်", phonetic: "sa lo ya ba de", meaning: "可以吃", example: "ဒီဟာ စားလို့ရပါတယ်။", exampleCn: "这个可以吃。" },
+  { id: 148, word: "အစပ်", phonetic: "a sat", meaning: "辣", example: "အစပ် မလိုပါဘူး။", exampleCn: "不要辣。" },
+  { id: 149, word: "ချိုပါတယ်", phonetic: "cho ba de", meaning: "甜", example: "ဒီဟာ ချိုပါတယ်။", exampleCn: "这个很甜。" },
+  { id: 150, word: "အေးပါတယ်", phonetic: "ay ba de", meaning: "冷 / 凉", example: "ရေ အေးပါတယ်။", exampleCn: "水是凉的。" }
+];
+
+var TEST_COUNT = 10;
+var STORAGE_KEY = "daily-myanmar-words-state-v11";
+
+var els = {
+  todayTitle: document.querySelector("#todayTitle"),
+  progressText: document.querySelector("#progressText"),
+  streakText: document.querySelector("#streakText"),
+  cardButton: document.querySelector("#cardButton"),
+  cardHint: document.querySelector("#cardHint"),
+  wordText: document.querySelector("#wordText"),
+  phoneticText: document.querySelector("#phoneticText"),
+  meaningText: document.querySelector("#meaningText"),
+  exampleText: document.querySelector("#exampleText"),
+  exampleCnText: document.querySelector("#exampleCnText"),
+  exampleTools: document.querySelector("#exampleTools"),
+  speakExampleButton: document.querySelector("#speakExampleButton"),
+  knownButton: document.querySelector("#knownButton"),
+  unknownButton: document.querySelector("#unknownButton"),
+  speakButton: document.querySelector("#speakButton"),
+  audioStatus: document.querySelector("#audioStatus"),
+  donePanel: document.querySelector("#donePanel"),
+  summaryText: document.querySelector("#summaryText"),
+  reviewAgainButton: document.querySelector("#reviewAgainButton"),
+  reviewTodayButton: document.querySelector("#reviewTodayButton"),
+  resetDayButton: document.querySelector("#resetDayButton"),
+  settingsButton: document.querySelector("#settingsButton"),
+  settingsPanel: document.querySelector("#settingsPanel"),
+  dailyCountSelect: document.querySelector("#dailyCountSelect"),
+  testIntervalSelect: document.querySelector("#testIntervalSelect"),
+  autoSpeakToggle: document.querySelector("#autoSpeakToggle"),
+  startTestButton: document.querySelector("#startTestButton"),
+  testPanel: document.querySelector("#testPanel"),
+  testProgressText: document.querySelector("#testProgressText"),
+  testWordText: document.querySelector("#testWordText"),
+  speakTestButton: document.querySelector("#speakTestButton"),
+  choiceList: document.querySelector("#choiceList"),
+  testFeedback: document.querySelector("#testFeedback"),
+  closeTestButton: document.querySelector("#closeTestButton")
+};
+
+if (window.EXTRA_WORDS && window.EXTRA_WORDS.length) {
+  window.WORDS = window.WORDS.concat(window.EXTRA_WORDS);
+}
+
+var today = toDateKey(new Date());
+var state = loadState();
+var session = buildSession();
+var index = firstUnansweredIndex();
+var flipped = false;
+var reviewMode = false;
+var lastAutoSpokenKey = "";
+var settingsOpen = false;
+var test = { active: false, questions: [], index: 0, score: 0, answered: false };
+var currentAudio = null;
+
+bindEvents();
+render();
+registerServiceWorker();
+
+function bindEvents() {
+  els.cardButton.addEventListener("click", function () {
+    flipped = !flipped;
+    renderCard();
+  });
+  els.knownButton.addEventListener("click", function () { answer(true); });
+  els.unknownButton.addEventListener("click", function () { answer(false); });
+  els.speakButton.addEventListener("click", speakCurrentWord);
+  els.speakExampleButton.addEventListener("click", speakCurrentExample);
+  els.speakExampleButton.addEventListener("keydown", function (event) {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      speakCurrentExample(event);
+    }
+  });
+  els.reviewAgainButton.addEventListener("click", reviewMistakes);
+  els.reviewTodayButton.addEventListener("click", reviewTodayWords);
+  els.resetDayButton.addEventListener("click", resetToday);
+  els.settingsButton.addEventListener("click", toggleSettings);
+  els.dailyCountSelect.addEventListener("change", updateSettings);
+  els.testIntervalSelect.addEventListener("change", updateSettings);
+  els.autoSpeakToggle.addEventListener("change", updateSettings);
+  els.startTestButton.addEventListener("click", startTest);
+  els.closeTestButton.addEventListener("click", closeTest);
+  els.speakTestButton.addEventListener("click", speakCurrentTestWord);
+}
+
+function loadState() {
+  var fallback = {
+    records: {},
+    days: {},
+    tests: [],
+    settings: { dailyCount: 10, testInterval: 7, autoSpeak: true },
+    lastStudyDate: "",
+    streak: 0
+  };
+  var saved = null;
+  try {
+    saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
+  } catch (error) {
+    saved = null;
+  }
+  if (!saved) return fallback;
+
+  saved.records = saved.records || {};
+  saved.days = saved.days || {};
+  saved.tests = saved.tests || [];
+  saved.settings = saved.settings || {};
+  saved.settings.dailyCount = Number(saved.settings.dailyCount || fallback.settings.dailyCount);
+  saved.settings.testInterval = Number(saved.settings.testInterval || fallback.settings.testInterval);
+  saved.settings.autoSpeak = saved.settings.autoSpeak !== false;
+  saved.lastStudyDate = saved.lastStudyDate || "";
+  saved.streak = saved.streak || 0;
+  return saved;
+}
+
+function saveState() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+}
+
+function buildSession() {
+  var existing = state.days[today];
+  if (existing && existing.ids && existing.ids.length) {
+    return mapIdsToWords(existing.ids);
+  }
+
+  var due = [];
+  var fresh = [];
+  var learned = [];
+  for (var i = 0; i < WORDS.length; i += 1) {
+    var word = WORDS[i];
+    var record = state.records[word.id];
+    if (record && record.reviewAfter && record.reviewAfter <= today) due.push(word);
+    else if (!record) fresh.push(word);
+    else learned.push(word);
+  }
+
+  var all = due.concat(fresh).concat(learned);
+  var picked = all.slice(0, state.settings.dailyCount);
+  state.days[today] = { ids: getIds(picked), answers: {}, completed: false };
+  saveState();
+  return picked;
+}
+
+function getIds(words) {
+  var ids = [];
+  for (var i = 0; i < words.length; i += 1) ids.push(words[i].id);
+  return ids;
+}
+
+function mapIdsToWords(ids) {
+  var words = [];
+  for (var i = 0; i < ids.length; i += 1) {
+    var word = findWord(ids[i]);
+    if (word) words.push(word);
+  }
+  return words;
+}
+
+function findWord(id) {
+  for (var i = 0; i < WORDS.length; i += 1) {
+    if (WORDS[i].id === Number(id)) return WORDS[i];
+  }
+  return null;
+}
+
+function render() {
+  els.todayTitle.textContent = formatToday();
+  els.streakText.textContent = String(state.streak || 0) + " 天";
+  els.startTestButton.textContent = isTestDue() ? "该小测了" : "本周小测";
+  renderSettings();
+  renderMode();
+  renderCard();
+  renderTest();
+}
+
+function renderMode() {
+  var learningHidden = test.active;
+  toggleHidden(document.querySelector(".stats"), learningHidden);
+  toggleHidden(els.startTestButton, learningHidden);
+  toggleHidden(document.querySelector(".card-area"), learningHidden);
+  toggleHidden(document.querySelector(".actions"), learningHidden);
+  toggleHidden(els.donePanel, learningHidden || !(state.days[today] && state.days[today].completed));
+  toggleHidden(els.testPanel, !learningHidden);
+}
+
+function renderSettings() {
+  toggleHidden(els.settingsPanel, !settingsOpen || test.active);
+  els.dailyCountSelect.value = String(state.settings.dailyCount);
+  els.testIntervalSelect.value = String(state.settings.testInterval);
+  els.autoSpeakToggle.checked = state.settings.autoSpeak;
+}
+
+function renderCard() {
+  if (test.active) return;
+
+  var day = state.days[today];
+  var current = session[index];
+  var answers = day && day.answers ? day.answers : {};
+  var answeredCount = Object.keys(answers).length;
+  var progressCount = reviewMode ? index : Math.min(answeredCount, session.length);
+  els.progressText.textContent = String(progressCount) + " / " + String(session.length);
+
+  if (!current || (day && day.completed)) {
+    toggleHidden(els.cardButton, true);
+    toggleHidden(document.querySelector(".actions"), true);
+    var answerValues = objectValues(answers);
+    var known = countKnown(answerValues);
+    els.summaryText.textContent = "认识 " + known + " 个，不认识 " + (answerValues.length - known) + " 个。";
+    return;
+  }
+
+  toggleHidden(els.cardButton, false);
+  toggleHidden(document.querySelector(".actions"), false);
+  els.wordText.textContent = current.word;
+  els.phoneticText.textContent = current.phonetic || "";
+  els.meaningText.textContent = current.meaning;
+  els.exampleText.textContent = current.example;
+  els.exampleCnText.textContent = current.exampleCn;
+  els.cardHint.textContent = flipped ? "点击收起" : "点击翻面";
+
+  toggleHidden(els.meaningText, !flipped);
+  toggleHidden(els.exampleText, !flipped);
+  toggleHidden(els.exampleCnText, !flipped);
+  toggleHidden(els.exampleTools, !flipped);
+  autoSpeak("learn-" + current.id + "-" + index, current.word);
+}
+
+function answer(isKnown) {
+  var current = session[index];
+  if (!current) return;
+  updateRecord(current, isKnown);
+  state.days[today].answers[current.id] = isKnown;
+  updateStreak();
+  index += 1;
+  flipped = false;
+  if (index >= session.length) {
+    state.days[today].completed = true;
+    reviewMode = false;
+  }
+  saveState();
+  render();
+}
+
+function updateRecord(word, isKnown) {
+  var oldRecord = state.records[word.id] || { level: 0 };
+  var level = isKnown ? Math.min((oldRecord.level || 0) + 1, 4) : 0;
+  var daysLater = isKnown ? [0, 3, 7, 15, 30][level] : 1;
+  state.records[word.id] = { level: level, lastSeen: today, reviewAfter: addDays(today, daysLater) };
+}
+
+function startTest() {
+  var pool = getTestPool();
+  test = { active: true, questions: [], index: 0, score: 0, answered: false };
+  for (var i = 0; i < pool.length; i += 1) test.questions.push(makeQuestion(pool[i]));
+  render();
+}
+
+function closeTest() {
+  test.active = false;
+  render();
+}
+
+function getTestPool() {
+  var studied = [];
+  for (var i = 0; i < WORDS.length; i += 1) {
+    if (state.records[WORDS[i].id]) studied.push(WORDS[i]);
+  }
+  var candidates = studied.length >= TEST_COUNT ? studied : session.slice();
+  candidates.sort(function (a, b) {
+    var recordA = state.records[a.id] || { level: 0, lastSeen: "" };
+    var recordB = state.records[b.id] || { level: 0, lastSeen: "" };
+    if ((recordA.level || 0) !== (recordB.level || 0)) return (recordA.level || 0) - (recordB.level || 0);
+    return String(recordA.lastSeen || "").localeCompare(String(recordB.lastSeen || ""));
+  });
+  return candidates.slice(0, TEST_COUNT);
+}
+
+function isTestDue() {
+  var lastTest = state.tests[state.tests.length - 1];
+  var lastTestDate = lastTest ? lastTest.date : "";
+  var completed = 0;
+  for (var date in state.days) {
+    if (Object.prototype.hasOwnProperty.call(state.days, date)) {
+      if (state.days[date].completed && (!lastTestDate || date > lastTestDate)) completed += 1;
+    }
+  }
+  return completed >= state.settings.testInterval;
+}
+
+function toggleSettings() {
+  settingsOpen = !settingsOpen;
+  render();
+}
+
+function updateSettings() {
+  var oldDailyCount = state.settings.dailyCount;
+  state.settings.dailyCount = Number(els.dailyCountSelect.value);
+  state.settings.testInterval = Number(els.testIntervalSelect.value);
+  state.settings.autoSpeak = els.autoSpeakToggle.checked;
+
+  var answers = state.days[today] && state.days[today].answers ? state.days[today].answers : {};
+  if (oldDailyCount !== state.settings.dailyCount && Object.keys(answers).length === 0) {
+    delete state.days[today];
+    session = buildSession();
+    index = 0;
+    flipped = false;
+  }
+  saveState();
+  render();
+}
+
+function makeQuestion(word) {
+  var wrongChoices = [];
+  var pool = WORDS.slice();
+  pool.sort(function () { return Math.random() - 0.5; });
+  for (var i = 0; i < pool.length && wrongChoices.length < 3; i += 1) {
+    if (pool[i].id !== word.id) wrongChoices.push(pool[i]);
+  }
+  var choices = [word].concat(wrongChoices);
+  choices.sort(function () { return Math.random() - 0.5; });
+  return { word: word, choices: choices, answerId: word.id };
+}
+
+function renderTest() {
+  if (!test.active) return;
+  var question = test.questions[test.index];
+  if (!question) {
+    finishTest();
+    return;
+  }
+  els.testProgressText.textContent = String(test.index + 1) + " / " + String(test.questions.length);
+  els.testWordText.textContent = question.word.word;
+  if (!test.answered) els.testFeedback.textContent = "";
+  els.choiceList.innerHTML = "";
+
+  for (var i = 0; i < question.choices.length; i += 1) {
+    appendChoiceButton(question.choices[i]);
+  }
+  autoSpeak("test-" + question.word.id + "-" + test.index, question.word.word);
+}
+
+function appendChoiceButton(choice) {
+  var button = document.createElement("button");
+  button.className = "choice";
+  button.type = "button";
+  button.textContent = choice.meaning;
+  button.addEventListener("click", function () { answerTest(choice.id); });
+  els.choiceList.appendChild(button);
+}
+
+function answerTest(choiceId) {
+  if (test.answered) return;
+  var question = test.questions[test.index];
+  var correct = choiceId === question.answerId;
+  test.answered = true;
+  if (correct) test.score += 1;
+  updateRecord(question.word, correct);
+
+  var pickedMeaning = "";
+  for (var i = 0; i < question.choices.length; i += 1) {
+    if (question.choices[i].id === choiceId) pickedMeaning = question.choices[i].meaning;
+  }
+  var buttons = els.choiceList.querySelectorAll(".choice");
+  for (var b = 0; b < buttons.length; b += 1) {
+    buttons[b].classList.toggle("correct", buttons[b].textContent === question.word.meaning);
+    buttons[b].classList.toggle("wrong", buttons[b].textContent === pickedMeaning && !correct);
+    buttons[b].disabled = true;
+  }
+
+  els.testFeedback.textContent = correct ? "答对了" : "答错了：" + question.word.meaning;
+  saveState();
+  window.setTimeout(function () {
+    test.index += 1;
+    test.answered = false;
+    renderTest();
+  }, 850);
+}
+
+function finishTest() {
+  state.tests.push({ date: today, score: test.score, total: test.questions.length });
+  saveState();
+  els.testProgressText.textContent = "完成";
+  els.testWordText.textContent = String(test.score) + " / " + String(test.questions.length);
+  els.choiceList.innerHTML = "";
+  els.testFeedback.textContent = test.score >= Math.ceil(test.questions.length * 0.8) ? "掌握得不错" : "错题会提前复习";
+  var button = document.createElement("button");
+  button.className = "primary full";
+  button.type = "button";
+  button.textContent = "回到今日单词";
+  button.addEventListener("click", closeTest);
+  els.choiceList.appendChild(button);
+}
+
+function updateStreak() {
+  if (state.lastStudyDate === today) return;
+  var yesterday = addDays(today, -1);
+  state.streak = state.lastStudyDate === yesterday ? (state.streak || 0) + 1 : 1;
+  state.lastStudyDate = today;
+}
+
+function addDays(dateString, amount) {
+  var date = new Date(dateString + "T00:00:00");
+  date.setDate(date.getDate() + amount);
+  return toDateKey(date);
+}
+
+function toDateKey(date) {
+  var year = date.getFullYear();
+  var month = String(date.getMonth() + 1);
+  var day = String(date.getDate());
+  if (month.length < 2) month = "0" + month;
+  if (day.length < 2) day = "0" + day;
+  return year + "-" + month + "-" + day;
+}
+
+function formatToday() {
+  return new Intl.DateTimeFormat("zh-CN", { month: "long", day: "numeric", weekday: "long" }).format(new Date());
+}
+
+function speakCurrentWord() {
+  var current = session[index];
+  if (!current) return;
+  speakText(current.word, 0.76);
+}
+
+function speakCurrentTestWord() {
+  var question = test.questions[test.index];
+  if (!question) return;
+  speakText(question.word.word, 0.76);
+}
+
+function speakCurrentExample(event) {
+  if (event && event.stopPropagation) event.stopPropagation();
+  var current = session[index];
+  if (!current) return;
+  speakText(current.example, 0.72);
+}
+
+function speakText(text, rate) {
+  playOnlineMyanmarAudio(text, function () {
+    speakWithSystemVoice(text, rate);
+  });
+}
+
+function playOnlineMyanmarAudio(text, onFail) {
+  if (!("Audio" in window)) {
+    onFail();
+    return;
+  }
+  if (currentAudio) {
+    currentAudio.pause();
+    currentAudio = null;
+  }
+  var url = "https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=my&q=" + encodeURIComponent(text);
+  var audio = new Audio(url);
+  var settled = false;
+  currentAudio = audio;
+  audio.preload = "auto";
+  audio.onplaying = function () {
+    settled = true;
+    setAudioStatus("在线缅语发音");
+  };
+  audio.onerror = function () {
+    if (settled) return;
+    settled = true;
+    if (currentAudio === audio) currentAudio = null;
+    onFail();
+  };
+  audio.onended = function () {
+    if (currentAudio === audio) currentAudio = null;
+  };
+  audio.play().catch(function () {
+    if (settled) return;
+    settled = true;
+    if (currentAudio === audio) currentAudio = null;
+    onFail();
+  });
+  window.setTimeout(function () {
+    if (settled) return;
+    settled = true;
+    if (currentAudio === audio) currentAudio = null;
+    onFail();
+  }, 2600);
+}
+
+function speakWithSystemVoice(text, rate) {
+  if (!("speechSynthesis" in window)) {
+    setAudioStatus("发音不可用，请检查浏览器声音权限");
+    return;
+  }
+  window.speechSynthesis.cancel();
+  var utterance = new SpeechSynthesisUtterance(text);
+  var voices = window.speechSynthesis.getVoices ? window.speechSynthesis.getVoices() : [];
+  for (var i = 0; i < voices.length; i += 1) {
+    var voiceText = String(voices[i].lang || "") + " " + String(voices[i].name || "");
+    if (/my|burmese|myanmar/i.test(voiceText)) {
+      utterance.voice = voices[i];
+      break;
+    }
+  }
+  utterance.lang = utterance.voice ? utterance.voice.lang : "my-MM";
+  utterance.rate = rate;
+  utterance.onstart = function () {
+    setAudioStatus(utterance.voice ? "系统缅语发音" : "系统发音");
+  };
+  utterance.onerror = function () {
+    setAudioStatus("发音失败，请检查手机声音权限");
+  };
+  window.speechSynthesis.speak(utterance);
+}
+
+function setAudioStatus(text) {
+  if (!els.audioStatus) return;
+  els.audioStatus.textContent = text || "";
+}
+
+function autoSpeak(key, text) {
+  if (!state.settings.autoSpeak || lastAutoSpokenKey === key) return;
+  lastAutoSpokenKey = key;
+  window.setTimeout(function () { speakText(text, 0.76); }, 180);
+}
+
+function reviewMistakes() {
+  var answers = state.days[today] && state.days[today].answers ? state.days[today].answers : {};
+  var wrongIds = [];
+  for (var id in answers) {
+    if (Object.prototype.hasOwnProperty.call(answers, id) && !answers[id]) wrongIds.push(Number(id));
+  }
+  startReview(wrongIds);
+}
+
+function reviewTodayWords() {
+  var ids = state.days[today] && state.days[today].ids ? state.days[today].ids : [];
+  startReview(ids);
+}
+
+function startReview(ids) {
+  session = mapIdsToWords(ids);
+  if (!session.length) return;
+  reviewMode = true;
+  state.days[today].completed = false;
+  index = 0;
+  flipped = false;
+  render();
+}
+
+function resetToday() {
+  var oldDay = state.days[today];
+  var ids = oldDay && oldDay.ids ? oldDay.ids : [];
+  state.days[today] = { ids: ids, answers: {}, completed: false };
+  saveState();
+  state = loadState();
+  session = buildSession();
+  index = 0;
+  flipped = false;
+  reviewMode = false;
+  render();
+}
+
+function firstUnansweredIndex() {
+  var answers = state.days[today] && state.days[today].answers ? state.days[today].answers : {};
+  for (var i = 0; i < session.length; i += 1) {
+    if (!(session[i].id in answers)) return i;
+  }
+  return session.length;
+}
+
+function objectValues(object) {
+  var values = [];
+  for (var key in object) {
+    if (Object.prototype.hasOwnProperty.call(object, key)) values.push(object[key]);
+  }
+  return values;
+}
+
+function countKnown(values) {
+  var count = 0;
+  for (var i = 0; i < values.length; i += 1) {
+    if (values[i]) count += 1;
+  }
+  return count;
+}
+
+function toggleHidden(element, hidden) {
+  if (!element) return;
+  element.classList.toggle("hidden", hidden);
+}
+
+function registerServiceWorker() {
+  if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.register("sw.js").catch(function () {});
+  }
+}
+
+    

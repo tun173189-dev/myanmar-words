@@ -1,0 +1,17 @@
+{
+  "name": "每日缅语词",
+  "short_name": "缅语词",
+  "start_url": "./index.html?v=15",
+  "display": "standalone",
+  "background_color": "#f7f3ea",
+  "theme_color": "#f7f3ea",
+  "description": "每天背缅语单词，侧重听力和日常办事沟通，离线可用。",
+  "icons": [
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
