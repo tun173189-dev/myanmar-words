@@ -1,4 +1,4 @@
-const CACHE_NAME = "daily-myanmar-words-v18";
+const CACHE_NAME = "daily-myanmar-words-v20";
 const ASSETS = [
   "./",
   "./index.html",
@@ -9,7 +9,7 @@ const ASSETS = [
   "./manifest.webmanifest",
   "./icon.svg",
   "./icon-512.png",
-  "./生成前20固定音频.html"
+  "./cloudflare-tts-worker.js"
 ];
 
 self.addEventListener("install", (event) => {

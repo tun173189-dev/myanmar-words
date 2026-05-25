@@ -1,5 +1,6 @@
 var TEST_COUNT = 10;
 var STORAGE_KEY = "daily-myanmar-words-state-v11";
+var TTS_PROXY_URL = "https://myanmar-tts.tun173189.workers.dev/tts";
 
 var els = {
   todayTitle: document.querySelector("#todayTitle"),
@@ -451,7 +452,7 @@ function playOnlineMyanmarAudio(text, onFail) {
     currentAudio.pause();
     currentAudio = null;
   }
-  var url = "https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=my&q=" + encodeURIComponent(text);
+  var url = makeTtsUrl(text);
   var audio = new Audio(url);
   var settled = false;
   currentAudio = audio;
@@ -481,6 +482,13 @@ function playOnlineMyanmarAudio(text, onFail) {
     if (currentAudio === audio) currentAudio = null;
     onFail();
   }, 2600);
+}
+
+function makeTtsUrl(text) {
+  if (TTS_PROXY_URL) {
+    return TTS_PROXY_URL.replace(/\/$/, "") + "?text=" + encodeURIComponent(text);
+  }
+  return "https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=my&q=" + encodeURIComponent(text);
 }
 
 function setAudioStatus(text) {

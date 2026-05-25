@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#f7f3ea" />
     <title>每日缅语词</title>
-    <link rel="manifest" href="manifest.webmanifest?v=18" />
+    <link rel="manifest" href="manifest.webmanifest?v=20" />
     <style>
 :root {
   color-scheme: light;
@@ -623,6 +623,7 @@ window.EXTRA_WORDS = [
 
 var TEST_COUNT = 10;
 var STORAGE_KEY = "daily-myanmar-words-state-v11";
+var TTS_PROXY_URL = "https://myanmar-tts.tun173189.workers.dev/tts";
 
 var els = {
   todayTitle: document.querySelector("#todayTitle"),
@@ -1074,7 +1075,7 @@ function playOnlineMyanmarAudio(text, onFail) {
     currentAudio.pause();
     currentAudio = null;
   }
-  var url = "https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=my&q=" + encodeURIComponent(text);
+  var url = makeTtsUrl(text);
   var audio = new Audio(url);
   var settled = false;
   currentAudio = audio;
@@ -1104,6 +1105,13 @@ function playOnlineMyanmarAudio(text, onFail) {
     if (currentAudio === audio) currentAudio = null;
     onFail();
   }, 2600);
+}
+
+function makeTtsUrl(text) {
+  if (TTS_PROXY_URL) {
+    return TTS_PROXY_URL.replace(/\/$/, "") + "?text=" + encodeURIComponent(text);
+  }
+  return "https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=my&q=" + encodeURIComponent(text);
 }
 
 function setAudioStatus(text) {
