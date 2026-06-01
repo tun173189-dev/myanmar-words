@@ -5,6 +5,7 @@ var TTS_PROXY_URL = "https://myanmar-tts.tun173189.workers.dev/tts";
 var els = {
   todayTitle: document.querySelector("#todayTitle"),
   progressText: document.querySelector("#progressText"),
+  progressLabel: document.querySelector("#progressLabel"),
   streakText: document.querySelector("#streakText"),
   cardButton: document.querySelector("#cardButton"),
   cardHint: document.querySelector("#cardHint"),
@@ -23,6 +24,12 @@ var els = {
   summaryText: document.querySelector("#summaryText"),
   reviewAgainButton: document.querySelector("#reviewAgainButton"),
   reviewTodayButton: document.querySelector("#reviewTodayButton"),
+  listenTodayButton: document.querySelector("#listenTodayButton"),
+  weeklyReviewPanel: document.querySelector("#weeklyReviewPanel"),
+  weeklyReviewTitle: document.querySelector("#weeklyReviewTitle"),
+  weeklyReviewSummary: document.querySelector("#weeklyReviewSummary"),
+  weeklyReviewButton: document.querySelector("#weeklyReviewButton"),
+  weakReviewButton: document.querySelector("#weakReviewButton"),
   resetDayButton: document.querySelector("#resetDayButton"),
   settingsButton: document.querySelector("#settingsButton"),
   settingsPanel: document.querySelector("#settingsPanel"),
@@ -32,6 +39,7 @@ var els = {
   startTestButton: document.querySelector("#startTestButton"),
   startListeningTestButton: document.querySelector("#startListeningTestButton"),
   testPanel: document.querySelector("#testPanel"),
+  testTitleText: document.querySelector("#testTitleText"),
   testProgressText: document.querySelector("#testProgressText"),
   testWordText: document.querySelector("#testWordText"),
   speakTestButton: document.querySelector("#speakTestButton"),
@@ -47,13 +55,14 @@ if (window.EXTRA_WORDS && window.EXTRA_WORDS.length) {
 
 var today = toDateKey(new Date());
 var state = loadState();
-var session = buildSession();
-var index = firstUnansweredIndex();
 var flipped = false;
-var reviewMode = false;
+var reviewSession = state.activeReview && state.activeReview.ids && state.activeReview.ids.length ? state.activeReview : null;
+var reviewMode = !!reviewSession;
+var session = reviewMode ? mapIdsToWords(reviewSession.ids) : buildSession();
+var index = reviewMode ? firstReviewUnansweredIndex() : firstUnansweredIndex();
 var lastAutoSpokenKey = "";
 var settingsOpen = false;
-var test = { active: false, listening: false, showWord: true, questions: [], index: 0, score: 0, answered: false };
+var test = { active: false, listening: false, showWord: true, title: "小测", questions: [], index: 0, score: 0, answered: false };
 var currentAudio = null;
 
 bindEvents();
@@ -77,6 +86,9 @@ function bindEvents() {
   });
   els.reviewAgainButton.addEventListener("click", reviewMistakes);
   els.reviewTodayButton.addEventListener("click", reviewTodayWords);
+  els.listenTodayButton.addEventListener("click", startTodayListeningReview);
+  els.weeklyReviewButton.addEventListener("click", startWeeklyReview);
+  els.weakReviewButton.addEventListener("click", reviewWeakWords);
   els.resetDayButton.addEventListener("click", resetToday);
   els.settingsButton.addEventListener("click", toggleSettings);
   els.dailyCountSelect.addEventListener("change", updateSettings);
@@ -96,7 +108,11 @@ function loadState() {
     tests: [],
     settings: { dailyCount: 10, testInterval: 7, autoSpeak: true },
     lastStudyDate: "",
-    streak: 0
+    streak: 0,
+    weeklyReviewThrough: "",
+    lastWeeklyReviewIds: [],
+    lastWeeklyReviewDate: "",
+    activeReview: null
   };
   var saved = null;
   try {
@@ -115,6 +131,15 @@ function loadState() {
   saved.settings.autoSpeak = saved.settings.autoSpeak !== false;
   saved.lastStudyDate = saved.lastStudyDate || "";
   saved.streak = saved.streak || 0;
+  saved.weeklyReviewThrough = saved.weeklyReviewThrough || "";
+  saved.lastWeeklyReviewIds = saved.lastWeeklyReviewIds || [];
+  saved.lastWeeklyReviewDate = saved.lastWeeklyReviewDate || "";
+  saved.activeReview = saved.activeReview && saved.activeReview.ids && saved.activeReview.ids.length ? saved.activeReview : null;
+  if (saved.activeReview) {
+    saved.activeReview.answers = saved.activeReview.answers || {};
+    saved.activeReview.type = saved.activeReview.type || "review";
+    saved.activeReview.sourceThrough = saved.activeReview.sourceThrough || "";
+  }
   return saved;
 }
 
@@ -171,21 +196,25 @@ function findWord(id) {
 function render() {
   els.todayTitle.textContent = formatToday();
   els.streakText.textContent = String(state.streak || 0) + " 天";
-  els.startTestButton.textContent = isTestDue() ? "该小测了" : "本周小测";
+  els.startTestButton.textContent = "本周小测";
   renderSettings();
+  renderWeeklyPanel();
   renderMode();
   renderCard();
   renderTest();
 }
 
 function renderMode() {
-  var learningHidden = test.active;
-  toggleHidden(document.querySelector(".stats"), learningHidden);
-  toggleHidden(document.querySelector(".test-actions"), learningHidden);
-  toggleHidden(document.querySelector(".card-area"), learningHidden);
-  toggleHidden(document.querySelector(".actions"), learningHidden);
-  toggleHidden(els.donePanel, learningHidden || !(state.days[today] && state.days[today].completed));
-  toggleHidden(els.testPanel, !learningHidden);
+  var testing = test.active;
+  var day = state.days[today];
+  var dailyDone = !!(day && day.completed);
+  toggleHidden(document.querySelector(".stats"), testing);
+  toggleHidden(els.weeklyReviewPanel, testing || reviewMode || !isWeeklyReviewDue());
+  toggleHidden(els.donePanel, testing || reviewMode || !dailyDone);
+  toggleHidden(document.querySelector(".test-actions"), testing);
+  toggleHidden(document.querySelector(".card-area"), testing || (dailyDone && !reviewMode));
+  toggleHidden(document.querySelector(".actions"), testing || (dailyDone && !reviewMode));
+  toggleHidden(els.testPanel, !testing);
 }
 
 function renderSettings() {
@@ -200,15 +229,17 @@ function renderCard() {
 
   var day = state.days[today];
   var current = session[index];
-  var answers = day && day.answers ? day.answers : {};
+  var answers = reviewMode && reviewSession ? reviewSession.answers : (day && day.answers ? day.answers : {});
   var answeredCount = Object.keys(answers).length;
   var progressCount = reviewMode ? index : Math.min(answeredCount, session.length);
   els.progressText.textContent = String(progressCount) + " / " + String(session.length);
+  if (els.progressLabel) els.progressLabel.textContent = reviewMode ? getReviewLabel() : "今日进度";
 
-  if (!current || (day && day.completed)) {
+  if (!current || (day && day.completed && !reviewMode)) {
     toggleHidden(els.cardButton, true);
     toggleHidden(document.querySelector(".actions"), true);
-    var answerValues = objectValues(answers);
+    var dayAnswers = day && day.answers ? day.answers : {};
+    var answerValues = objectValues(dayAnswers);
     var known = countKnown(answerValues);
     els.summaryText.textContent = "认识 " + known + " 个，不认识 " + (answerValues.length - known) + " 个。";
     return;
@@ -234,13 +265,23 @@ function answer(isKnown) {
   var current = session[index];
   if (!current) return;
   updateRecord(current, isKnown);
-  state.days[today].answers[current.id] = isKnown;
+  if (reviewMode && reviewSession) {
+    reviewSession.answers[current.id] = isKnown;
+    state.activeReview = reviewSession;
+  } else {
+    ensureTodayDay();
+    state.days[today].answers[current.id] = isKnown;
+  }
   updateStreak();
   index += 1;
   flipped = false;
   if (index >= session.length) {
+    if (reviewMode && reviewSession) {
+      finishReview();
+      render();
+      return;
+    }
     state.days[today].completed = true;
-    reviewMode = false;
   }
   saveState();
   render();
@@ -254,15 +295,20 @@ function updateRecord(word, isKnown) {
 }
 
 function startTest() {
-  var pool = getTestPool();
-  test = { active: true, listening: false, showWord: true, questions: [], index: 0, score: 0, answered: false };
-  for (var i = 0; i < pool.length; i += 1) test.questions.push(makeQuestion(pool[i]));
-  render();
+  startChoiceTest(getTestPool(), false, "本周小测");
 }
 
 function startListeningTest() {
-  var pool = getTestPool();
-  test = { active: true, listening: true, showWord: false, questions: [], index: 0, score: 0, answered: false };
+  startChoiceTest(getTestPool(), true, "听力小测");
+}
+
+function startTodayListeningReview() {
+  startChoiceTest(mapIdsToWords(getTodayIds()), true, "今天再听");
+}
+
+function startChoiceTest(pool, listening, title) {
+  if (!pool.length) return;
+  test = { active: true, listening: listening, showWord: !listening, title: title, questions: [], index: 0, score: 0, answered: false };
   for (var i = 0; i < pool.length; i += 1) test.questions.push(makeQuestion(pool[i]));
   render();
 }
@@ -273,9 +319,14 @@ function closeTest() {
 }
 
 function getTestPool() {
-  var studied = [];
-  for (var i = 0; i < WORDS.length; i += 1) {
-    if (state.records[WORDS[i].id]) studied.push(WORDS[i]);
+  var source = getWeeklyReviewSource();
+  var reviewedToday = state.lastWeeklyReviewDate === today ? state.lastWeeklyReviewIds : [];
+  var preferredIds = source.ids.length ? source.ids : reviewedToday;
+  var studied = preferredIds.length ? mapIdsToWords(preferredIds) : [];
+  if (!studied.length) {
+    for (var i = 0; i < WORDS.length; i += 1) {
+      if (state.records[WORDS[i].id]) studied.push(WORDS[i]);
+    }
   }
   var candidates = studied.length >= TEST_COUNT ? studied : session.slice();
   candidates.sort(function (a, b) {
@@ -340,6 +391,7 @@ function renderTest() {
     finishTest();
     return;
   }
+  if (els.testTitleText) els.testTitleText.textContent = test.title || "小测";
   els.testProgressText.textContent = String(test.index + 1) + " / " + String(test.questions.length);
   els.testWordText.textContent = test.listening && !test.showWord ? "听发音，选择意思" : question.word.word;
   toggleHidden(els.showTestWordButton, !test.listening || test.showWord);
@@ -534,30 +586,65 @@ function reviewMistakes() {
   for (var id in answers) {
     if (Object.prototype.hasOwnProperty.call(answers, id) && !answers[id]) wrongIds.push(Number(id));
   }
-  startReview(wrongIds);
+  startReview(wrongIds, "mistakes");
 }
 
 function reviewTodayWords() {
-  var ids = state.days[today] && state.days[today].ids ? state.days[today].ids : [];
-  startReview(ids);
+  startReview(getTodayIds(), "today");
 }
 
-function startReview(ids) {
-  session = mapIdsToWords(ids);
+function startWeeklyReview() {
+  var source = getWeeklyReviewSource();
+  startReview(prioritizeReviewIds(source.ids), "weekly", { sourceThrough: source.through });
+}
+
+function reviewWeakWords() {
+  startReview(getWeakWordIds(), "weak");
+}
+
+function startReview(ids, type, options) {
+  var unique = uniqueIds(ids);
+  session = mapIdsToWords(unique);
   if (!session.length) return;
   reviewMode = true;
-  state.days[today].completed = false;
+  reviewSession = {
+    type: type || "review",
+    ids: getIds(session),
+    answers: {},
+    started: today,
+    sourceThrough: options && options.sourceThrough ? options.sourceThrough : ""
+  };
+  state.activeReview = reviewSession;
   index = 0;
   flipped = false;
+  saveState();
   render();
+}
+
+function finishReview() {
+  var finished = reviewSession;
+  if (finished && finished.type === "weekly" && finished.sourceThrough) {
+    state.weeklyReviewThrough = finished.sourceThrough;
+    state.lastWeeklyReviewIds = finished.ids.slice();
+    state.lastWeeklyReviewDate = today;
+  }
+  state.activeReview = null;
+  reviewSession = null;
+  reviewMode = false;
+  session = buildSession();
+  index = firstUnansweredIndex();
+  flipped = false;
+  saveState();
 }
 
 function resetToday() {
   var oldDay = state.days[today];
   var ids = oldDay && oldDay.ids ? oldDay.ids : [];
   state.days[today] = { ids: ids, answers: {}, completed: false };
+  state.activeReview = null;
   saveState();
   state = loadState();
+  reviewSession = null;
   session = buildSession();
   index = 0;
   flipped = false;
@@ -571,6 +658,106 @@ function firstUnansweredIndex() {
     if (!(session[i].id in answers)) return i;
   }
   return session.length;
+}
+
+function firstReviewUnansweredIndex() {
+  var answers = reviewSession && reviewSession.answers ? reviewSession.answers : {};
+  for (var i = 0; i < session.length; i += 1) {
+    if (!(session[i].id in answers)) return i;
+  }
+  return session.length;
+}
+
+function ensureTodayDay() {
+  if (!state.days[today]) {
+    state.days[today] = { ids: getIds(session), answers: {}, completed: false };
+  }
+  state.days[today].answers = state.days[today].answers || {};
+}
+
+function getTodayIds() {
+  return state.days[today] && state.days[today].ids ? state.days[today].ids : [];
+}
+
+function renderWeeklyPanel() {
+  var source = getWeeklyReviewSource();
+  var weakCount = getWeakWordIds().length;
+  if (els.weeklyReviewTitle) els.weeklyReviewTitle.textContent = "本周该复习了";
+  if (els.weeklyReviewSummary) {
+    els.weeklyReviewSummary.textContent = "这段时间学了 " + source.ids.length + " 个词，先完整复习一遍，再做小测。";
+  }
+  if (els.weakReviewButton) {
+    els.weakReviewButton.textContent = weakCount ? "复习没掌握的词 " + weakCount : "暂无没掌握的词";
+    els.weakReviewButton.disabled = !weakCount;
+  }
+}
+
+function getWeeklyReviewSource() {
+  var days = getCompletedDayKeysAfter(state.weeklyReviewThrough || "");
+  var ids = [];
+  for (var i = 0; i < days.length; i += 1) {
+    var day = state.days[days[i]];
+    if (day && day.ids) ids = ids.concat(day.ids);
+  }
+  return { days: days, ids: uniqueIds(ids), through: days.length ? days[days.length - 1] : "" };
+}
+
+function isWeeklyReviewDue() {
+  return getWeeklyReviewSource().days.length >= state.settings.testInterval;
+}
+
+function getCompletedDayKeysAfter(dateKey) {
+  var keys = [];
+  for (var key in state.days) {
+    if (Object.prototype.hasOwnProperty.call(state.days, key)) {
+      if (state.days[key].completed && (!dateKey || key > dateKey)) keys.push(key);
+    }
+  }
+  keys.sort();
+  return keys;
+}
+
+function getWeakWordIds() {
+  var ids = [];
+  for (var i = 0; i < WORDS.length; i += 1) {
+    var record = state.records[WORDS[i].id];
+    if (record && ((record.level || 0) === 0 || (record.reviewAfter && record.reviewAfter <= today))) ids.push(WORDS[i].id);
+  }
+  return prioritizeReviewIds(ids);
+}
+
+function prioritizeReviewIds(ids) {
+  var unique = uniqueIds(ids);
+  unique.sort(function (a, b) {
+    var recordA = state.records[a] || { level: 0, reviewAfter: "", lastSeen: "" };
+    var recordB = state.records[b] || { level: 0, reviewAfter: "", lastSeen: "" };
+    var dueA = recordA.reviewAfter && recordA.reviewAfter <= today ? 0 : 1;
+    var dueB = recordB.reviewAfter && recordB.reviewAfter <= today ? 0 : 1;
+    if (dueA !== dueB) return dueA - dueB;
+    if ((recordA.level || 0) !== (recordB.level || 0)) return (recordA.level || 0) - (recordB.level || 0);
+    return String(recordA.lastSeen || "").localeCompare(String(recordB.lastSeen || ""));
+  });
+  return unique;
+}
+
+function uniqueIds(ids) {
+  var seen = {};
+  var unique = [];
+  for (var i = 0; i < ids.length; i += 1) {
+    var id = Number(ids[i]);
+    if (!id || seen[id]) continue;
+    seen[id] = true;
+    unique.push(id);
+  }
+  return unique;
+}
+
+function getReviewLabel() {
+  if (!reviewSession) return "复习进度";
+  if (reviewSession.type === "weekly") return "本周复习";
+  if (reviewSession.type === "weak") return "弱项复习";
+  if (reviewSession.type === "mistakes") return "错词复习";
+  return "今日复习";
 }
 
 function objectValues(object) {

@@ -28,10 +28,10 @@ button {
   width: min(100%, 460px);
   min-height: 100vh;
   margin: 0 auto;
-  padding: 22px 18px 26px;
+  padding: 18px 18px 26px;
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 14px;
 }
 
 .topbar {
@@ -60,7 +60,7 @@ p {
 }
 
 h1 {
-  font-size: 30px;
+  font-size: 28px;
   line-height: 1.15;
 }
 
@@ -82,7 +82,7 @@ h1 {
 }
 
 .stats div {
-  min-height: 76px;
+  min-height: 70px;
   padding: 14px;
   border: 1px solid rgba(77, 66, 52, 0.1);
   border-radius: 8px;
@@ -161,12 +161,12 @@ input[type="checkbox"] {
 .card-area {
   flex: 1;
   display: grid;
-  min-height: 390px;
+  min-height: 360px;
 }
 
 .word-card {
   width: 100%;
-  min-height: 390px;
+  min-height: 360px;
   padding: 28px 24px;
   border-radius: 8px;
   background: #fffaf1;
@@ -270,6 +270,7 @@ input[type="checkbox"] {
   width: 100%;
 }
 
+.review-panel,
 .done-panel {
   padding: 20px;
   border-radius: 8px;
@@ -279,12 +280,29 @@ input[type="checkbox"] {
   gap: 14px;
 }
 
+.review-panel h2,
 .done-panel h2 {
   font-size: 24px;
 }
 
+.review-panel p,
 .done-panel p {
   color: #61584f;
+}
+
+.review-actions,
+.done-actions {
+  display: grid;
+  gap: 10px;
+}
+
+.listen-primary {
+  background: #2a2f45;
+}
+
+button:disabled {
+  opacity: 0.48;
+  cursor: not-allowed;
 }
 
 .test-panel {
@@ -362,12 +380,16 @@ input[type="checkbox"] {
     padding-inline: 14px;
   }
 
+  h1 {
+    font-size: 26px;
+  }
+
   .word {
     font-size: 36px;
   }
 
   .card-area,
   .word-card {
-    min-height: 340px;
+    min-height: 330px;
   }
 }
