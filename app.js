@@ -79,7 +79,8 @@ var lastAutoSpokenKey = "";
 var settingsOpen = false;
 var test = { active: false, listening: false, showWord: true, title: "小测", questions: [], index: 0, score: 0, answered: false };
 var storyState = { active: false, storyIndex: 0, lineIndex: 0, showCn: false, playing: false, audio: null };
-var storyHistoryActive = false;
+var panelHistoryActive = false;
+var activePanel = "";
 var currentAudio = null;
 
 bindEvents();
@@ -280,7 +281,7 @@ function renderCard() {
   els.meaningText.textContent = current.meaning;
   els.exampleText.textContent = current.example;
   els.exampleCnText.textContent = current.exampleCn;
-  els.cardHint.textContent = flipped ? "点击收起" : "点击翻面";
+  els.cardHint.textContent = flipped ? "点击收起中文" : "点击显示中文";
 
   toggleHidden(els.meaningText, !flipped);
   toggleHidden(els.exampleText, !flipped);
@@ -337,29 +338,42 @@ function startTodayListeningReview() {
 function startChoiceTest(pool, listening, title) {
   if (!pool.length) return;
   pauseStoryAudio();
-  storyState.active = false;
+  closeStoryPanel();
+  closeSettingsPanel();
   test = { active: true, listening: listening, showWord: !listening, title: title, questions: [], index: 0, score: 0, answered: false };
+  pushPanelHistory("test");
   for (var i = 0; i < pool.length; i += 1) test.questions.push(makeQuestion(pool[i]));
   render();
 }
 
-function closeTest() {
+function closeTest(fromHistory) {
+  if (!fromHistory && activePanel === "test" && panelHistoryActive && window.history && window.history.back) {
+    window.history.back();
+    return;
+  }
+  closeTestPanel();
+}
+
+function closeTestPanel() {
   pauseCurrentAudio();
   test.active = false;
+  clearPanelHistory("test");
   render();
 }
 
 function openStoryPractice() {
   if (!window.LISTENING_STORIES || !window.LISTENING_STORIES.length) return;
   pauseCurrentAudio();
+  closeTestPanel();
+  closeSettingsPanel();
   storyState = { active: true, storyIndex: 0, lineIndex: 0, showCn: false, playing: false, audio: null };
-  pushStoryHistory();
+  pushPanelHistory("story");
   render();
   playStoryLine(true, 1);
 }
 
 function closeStoryPractice(fromHistory) {
-  if (!fromHistory && storyHistoryActive && window.history && window.history.back) {
+  if (!fromHistory && activePanel === "story" && panelHistoryActive && window.history && window.history.back) {
     window.history.back();
     return;
   }
@@ -369,22 +383,44 @@ function closeStoryPractice(fromHistory) {
 function closeStoryPanel() {
   pauseStoryAudio();
   storyState.active = false;
-  storyHistoryActive = false;
+  clearPanelHistory("story");
   render();
 }
 
-function pushStoryHistory() {
-  if (storyHistoryActive || !window.history || !window.history.pushState) return;
+function pushPanelHistory(panel) {
+  if (panelHistoryActive || !window.history || !window.history.pushState) {
+    activePanel = panel;
+    return;
+  }
   try {
-    window.history.pushState({ myanmarWordsPanel: "story" }, "", window.location.href);
-    storyHistoryActive = true;
+    window.history.pushState({ myanmarWordsPanel: panel }, "", window.location.href);
+    panelHistoryActive = true;
+    activePanel = panel;
   } catch (error) {
-    storyHistoryActive = false;
+    panelHistoryActive = false;
+    activePanel = panel;
+  }
+}
+
+function clearPanelHistory(panel) {
+  if (activePanel === panel) {
+    activePanel = "";
+    panelHistoryActive = false;
   }
 }
 
 function handleBrowserBack() {
-  if (storyState.active) closeStoryPractice(true);
+  if (test.active) {
+    closeTest(true);
+    return;
+  }
+  if (storyState.active) {
+    closeStoryPractice(true);
+    return;
+  }
+  if (settingsOpen) {
+    closeSettings(true);
+  }
 }
 
 function getTestPool() {
@@ -420,7 +456,26 @@ function isTestDue() {
 }
 
 function toggleSettings() {
-  settingsOpen = !settingsOpen;
+  if (settingsOpen) {
+    closeSettings(false);
+    return;
+  }
+  settingsOpen = true;
+  pushPanelHistory("settings");
+  render();
+}
+
+function closeSettings(fromHistory) {
+  if (!fromHistory && activePanel === "settings" && panelHistoryActive && window.history && window.history.back) {
+    window.history.back();
+    return;
+  }
+  closeSettingsPanel();
+}
+
+function closeSettingsPanel() {
+  settingsOpen = false;
+  clearPanelHistory("settings");
   render();
 }
 

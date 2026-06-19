@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#f7f3ea" />
     <title>每日缅语词</title>
-    <link rel="manifest" href="manifest.webmanifest?v=28" />
+    <link rel="manifest" href="manifest.webmanifest?v=29" />
     <style>
 :root {
   color-scheme: light;
@@ -37,10 +37,10 @@ button {
   width: min(100%, 460px);
   min-height: 100vh;
   margin: 0 auto;
-  padding: 18px 18px 26px;
+  padding: 14px 18px 24px;
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 12px;
 }
 
 .topbar {
@@ -59,7 +59,7 @@ button {
 .eyebrow {
   margin: 0 0 4px;
   color: #6f665b;
-  font-size: 14px;
+  font-size: 13px;
 }
 
 h1,
@@ -69,19 +69,28 @@ p {
 }
 
 h1 {
-  font-size: 28px;
+  font-size: 24px;
   line-height: 1.15;
 }
 
 .icon-button,
 .speak {
-  width: 48px;
-  height: 48px;
-  flex: 0 0 48px;
+  width: 50px;
+  height: 50px;
+  flex: 0 0 50px;
   border-radius: 50%;
   background: #fffaf1;
   color: #3b352d;
   box-shadow: 0 8px 24px rgba(74, 56, 35, 0.12);
+}
+
+#settingsButton {
+  width: 56px;
+  height: 56px;
+  flex-basis: 56px;
+  color: #285b4e;
+  font-size: 24px;
+  box-shadow: 0 10px 28px rgba(47, 111, 94, 0.18);
 }
 
 .stats {
@@ -91,8 +100,8 @@ h1 {
 }
 
 .stats div {
-  min-height: 70px;
-  padding: 14px;
+  min-height: 60px;
+  padding: 10px 12px;
   border: 1px solid rgba(77, 66, 52, 0.1);
   border-radius: 8px;
   background: rgba(255, 250, 241, 0.78);
@@ -100,16 +109,16 @@ h1 {
 
 .stats span {
   display: block;
-  font-size: 24px;
+  font-size: 22px;
   font-weight: 750;
   line-height: 1.1;
 }
 
 .stats small {
   display: block;
-  margin-top: 8px;
+  margin-top: 6px;
   color: #72685d;
-  font-size: 13px;
+  font-size: 12px;
 }
 
 .test-actions {
@@ -321,12 +330,12 @@ button:disabled {
 
 .test-panel,
 .story-panel {
-  padding: 20px;
+  padding: 16px;
   border-radius: 8px;
   background: #fffaf1;
   box-shadow: 0 18px 50px rgba(72, 52, 30, 0.16);
   display: grid;
-  gap: 18px;
+  gap: 14px;
 }
 
 .test-head {
@@ -410,8 +419,8 @@ button:disabled {
 }
 
 .story-card {
-  min-height: 210px;
-  padding: 18px;
+  min-height: 168px;
+  padding: 14px;
   border-radius: 8px;
   background: #f3eadf;
   display: grid;
@@ -428,7 +437,7 @@ button:disabled {
 
 .story-sentence {
   color: #27231e;
-  font-size: 30px;
+  font-size: 26px;
   font-weight: 800;
   line-height: 1.28;
   overflow-wrap: anywhere;
@@ -462,7 +471,7 @@ button:disabled {
   }
 
   h1 {
-    font-size: 26px;
+    font-size: 23px;
   }
 
   .word {
@@ -475,7 +484,11 @@ button:disabled {
   }
 
   .story-sentence {
-    font-size: 26px;
+    font-size: 24px;
+  }
+
+  .story-card {
+    min-height: 150px;
   }
 }
     </style>
@@ -527,7 +540,7 @@ button:disabled {
       <div class="test-actions">
         <button class="test-entry" id="startTestButton" type="button">本周小测</button>
         <button class="test-entry listen-entry" id="startListeningTestButton" type="button">听力小测</button>
-        <button class="test-entry story-entry" id="startStoryButton" type="button">听力故事</button>
+        <button class="test-entry story-entry" id="startStoryButton" type="button">听力短句</button>
       </div>
 
       <section class="settings-panel hidden" id="settingsPanel" aria-label="设置">
@@ -555,8 +568,8 @@ button:disabled {
       </section>
 
       <section class="card-area">
-        <button class="word-card" id="cardButton" type="button" aria-label="点击翻开单词卡片">
-          <span class="card-hint" id="cardHint">点击翻面</span>
+        <button class="word-card" id="cardButton" type="button" aria-label="点击显示中文">
+          <span class="card-hint" id="cardHint">点击显示中文</span>
           <span class="word" id="wordText">မင်္ဂလာပါ</span>
           <span class="phonetic" id="phoneticText"></span>
           <span class="meaning hidden" id="meaningText"></span>
@@ -593,10 +606,10 @@ button:disabled {
       <section class="story-panel hidden" id="storyPanel" aria-live="polite">
         <div class="test-head">
           <div>
-            <p class="eyebrow">小故事听力</p>
+            <p class="eyebrow">听力短句练习</p>
             <h2 id="storyTitle">办事对话</h2>
           </div>
-          <button class="icon-button" id="closeStoryButton" type="button" aria-label="退出听力故事" title="退出听力故事">×</button>
+          <button class="icon-button" id="closeStoryButton" type="button" aria-label="退出听力短句练习" title="退出听力短句练习">×</button>
         </div>
         <div class="story-list" id="storyList" aria-label="选择故事"></div>
         <div class="story-card">
@@ -1290,7 +1303,8 @@ var lastAutoSpokenKey = "";
 var settingsOpen = false;
 var test = { active: false, listening: false, showWord: true, title: "小测", questions: [], index: 0, score: 0, answered: false };
 var storyState = { active: false, storyIndex: 0, lineIndex: 0, showCn: false, playing: false, audio: null };
-var storyHistoryActive = false;
+var panelHistoryActive = false;
+var activePanel = "";
 var currentAudio = null;
 
 bindEvents();
@@ -1491,7 +1505,7 @@ function renderCard() {
   els.meaningText.textContent = current.meaning;
   els.exampleText.textContent = current.example;
   els.exampleCnText.textContent = current.exampleCn;
-  els.cardHint.textContent = flipped ? "点击收起" : "点击翻面";
+  els.cardHint.textContent = flipped ? "点击收起中文" : "点击显示中文";
 
   toggleHidden(els.meaningText, !flipped);
   toggleHidden(els.exampleText, !flipped);
@@ -1548,29 +1562,42 @@ function startTodayListeningReview() {
 function startChoiceTest(pool, listening, title) {
   if (!pool.length) return;
   pauseStoryAudio();
-  storyState.active = false;
+  closeStoryPanel();
+  closeSettingsPanel();
   test = { active: true, listening: listening, showWord: !listening, title: title, questions: [], index: 0, score: 0, answered: false };
+  pushPanelHistory("test");
   for (var i = 0; i < pool.length; i += 1) test.questions.push(makeQuestion(pool[i]));
   render();
 }
 
-function closeTest() {
+function closeTest(fromHistory) {
+  if (!fromHistory && activePanel === "test" && panelHistoryActive && window.history && window.history.back) {
+    window.history.back();
+    return;
+  }
+  closeTestPanel();
+}
+
+function closeTestPanel() {
   pauseCurrentAudio();
   test.active = false;
+  clearPanelHistory("test");
   render();
 }
 
 function openStoryPractice() {
   if (!window.LISTENING_STORIES || !window.LISTENING_STORIES.length) return;
   pauseCurrentAudio();
+  closeTestPanel();
+  closeSettingsPanel();
   storyState = { active: true, storyIndex: 0, lineIndex: 0, showCn: false, playing: false, audio: null };
-  pushStoryHistory();
+  pushPanelHistory("story");
   render();
   playStoryLine(true, 1);
 }
 
 function closeStoryPractice(fromHistory) {
-  if (!fromHistory && storyHistoryActive && window.history && window.history.back) {
+  if (!fromHistory && activePanel === "story" && panelHistoryActive && window.history && window.history.back) {
     window.history.back();
     return;
   }
@@ -1580,22 +1607,44 @@ function closeStoryPractice(fromHistory) {
 function closeStoryPanel() {
   pauseStoryAudio();
   storyState.active = false;
-  storyHistoryActive = false;
+  clearPanelHistory("story");
   render();
 }
 
-function pushStoryHistory() {
-  if (storyHistoryActive || !window.history || !window.history.pushState) return;
+function pushPanelHistory(panel) {
+  if (panelHistoryActive || !window.history || !window.history.pushState) {
+    activePanel = panel;
+    return;
+  }
   try {
-    window.history.pushState({ myanmarWordsPanel: "story" }, "", window.location.href);
-    storyHistoryActive = true;
+    window.history.pushState({ myanmarWordsPanel: panel }, "", window.location.href);
+    panelHistoryActive = true;
+    activePanel = panel;
   } catch (error) {
-    storyHistoryActive = false;
+    panelHistoryActive = false;
+    activePanel = panel;
+  }
+}
+
+function clearPanelHistory(panel) {
+  if (activePanel === panel) {
+    activePanel = "";
+    panelHistoryActive = false;
   }
 }
 
 function handleBrowserBack() {
-  if (storyState.active) closeStoryPractice(true);
+  if (test.active) {
+    closeTest(true);
+    return;
+  }
+  if (storyState.active) {
+    closeStoryPractice(true);
+    return;
+  }
+  if (settingsOpen) {
+    closeSettings(true);
+  }
 }
 
 function getTestPool() {
@@ -1631,7 +1680,26 @@ function isTestDue() {
 }
 
 function toggleSettings() {
-  settingsOpen = !settingsOpen;
+  if (settingsOpen) {
+    closeSettings(false);
+    return;
+  }
+  settingsOpen = true;
+  pushPanelHistory("settings");
+  render();
+}
+
+function closeSettings(fromHistory) {
+  if (!fromHistory && activePanel === "settings" && panelHistoryActive && window.history && window.history.back) {
+    window.history.back();
+    return;
+  }
+  closeSettingsPanel();
+}
+
+function closeSettingsPanel() {
+  settingsOpen = false;
+  clearPanelHistory("settings");
   render();
 }
 
@@ -2222,6 +2290,7 @@ function registerServiceWorker() {
     </script>
   </body>
 </html>
+
 
 
 
