@@ -558,12 +558,14 @@ function playStoryLine(restart, rate) {
   var line = getCurrentStoryLine();
   if (!line) return;
   if (restart) pauseStoryAudio();
+  setStoryStatus("正在准备发音");
   storyState.audio = playOnlineMyanmarAudio(line.my, function () {
     storyState.playing = false;
-    setStoryStatus("在线缅语发音失败，请检查网络或浏览器声音权限");
+    setStoryStatus("自动播放失败，请点继续");
     renderStory();
   }, {
     rate: rate || 1,
+    timeoutMs: 9000,
     onPlaying: function () {
       storyState.playing = true;
       setStoryStatus((rate || 1) < 1 ? "慢速朗读" : "正在朗读");
@@ -765,7 +767,7 @@ function playOnlineMyanmarAudio(text, onFail, options) {
     settled = true;
     if (currentAudio === audio) currentAudio = null;
     onFail();
-  }, 2600);
+  }, options && options.timeoutMs ? options.timeoutMs : 2600);
   return audio;
 }
 
