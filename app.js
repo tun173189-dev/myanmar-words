@@ -38,6 +38,7 @@ var els = {
   autoSpeakToggle: document.querySelector("#autoSpeakToggle"),
   startTestButton: document.querySelector("#startTestButton"),
   startListeningTestButton: document.querySelector("#startListeningTestButton"),
+  startStoryButton: document.querySelector("#startStoryButton"),
   testPanel: document.querySelector("#testPanel"),
   testTitleText: document.querySelector("#testTitleText"),
   testProgressText: document.querySelector("#testProgressText"),
@@ -46,7 +47,21 @@ var els = {
   showTestWordButton: document.querySelector("#showTestWordButton"),
   choiceList: document.querySelector("#choiceList"),
   testFeedback: document.querySelector("#testFeedback"),
-  closeTestButton: document.querySelector("#closeTestButton")
+  closeTestButton: document.querySelector("#closeTestButton"),
+  storyPanel: document.querySelector("#storyPanel"),
+  storyList: document.querySelector("#storyList"),
+  storyTitle: document.querySelector("#storyTitle"),
+  storyProgressText: document.querySelector("#storyProgressText"),
+  storySentenceText: document.querySelector("#storySentenceText"),
+  storyCnText: document.querySelector("#storyCnText"),
+  storyStatus: document.querySelector("#storyStatus"),
+  storySpeedSelect: document.querySelector("#storySpeedSelect"),
+  storyPlayButton: document.querySelector("#storyPlayButton"),
+  storyReplayButton: document.querySelector("#storyReplayButton"),
+  storyPrevButton: document.querySelector("#storyPrevButton"),
+  storyNextButton: document.querySelector("#storyNextButton"),
+  storyShowCnButton: document.querySelector("#storyShowCnButton"),
+  closeStoryButton: document.querySelector("#closeStoryButton")
 };
 
 if (window.EXTRA_WORDS && window.EXTRA_WORDS.length) {
@@ -63,6 +78,7 @@ var index = reviewMode ? firstReviewUnansweredIndex() : firstUnansweredIndex();
 var lastAutoSpokenKey = "";
 var settingsOpen = false;
 var test = { active: false, listening: false, showWord: true, title: "小测", questions: [], index: 0, score: 0, answered: false };
+var storyState = { active: false, storyIndex: 0, lineIndex: 0, showCn: false, playing: false, audio: null };
 var currentAudio = null;
 
 bindEvents();
@@ -96,9 +112,17 @@ function bindEvents() {
   els.autoSpeakToggle.addEventListener("change", updateSettings);
   els.startTestButton.addEventListener("click", startTest);
   els.startListeningTestButton.addEventListener("click", startListeningTest);
+  els.startStoryButton.addEventListener("click", openStoryPractice);
   els.closeTestButton.addEventListener("click", closeTest);
   els.speakTestButton.addEventListener("click", speakCurrentTestWord);
   els.showTestWordButton.addEventListener("click", showListeningWord);
+  els.closeStoryButton.addEventListener("click", closeStoryPractice);
+  els.storyPlayButton.addEventListener("click", toggleStoryPlay);
+  els.storyReplayButton.addEventListener("click", replayStoryLine);
+  els.storyPrevButton.addEventListener("click", previousStoryLine);
+  els.storyNextButton.addEventListener("click", nextStoryLine);
+  els.storyShowCnButton.addEventListener("click", toggleStoryChinese);
+  els.storySpeedSelect.addEventListener("change", updateStorySpeed);
 }
 
 function loadState() {
@@ -202,10 +226,11 @@ function render() {
   renderMode();
   renderCard();
   renderTest();
+  renderStory();
 }
 
 function renderMode() {
-  var testing = test.active;
+  var testing = test.active || storyState.active;
   var day = state.days[today];
   var dailyDone = !!(day && day.completed);
   toggleHidden(document.querySelector(".stats"), testing);
@@ -214,18 +239,19 @@ function renderMode() {
   toggleHidden(document.querySelector(".test-actions"), testing);
   toggleHidden(document.querySelector(".card-area"), testing || (dailyDone && !reviewMode));
   toggleHidden(document.querySelector(".actions"), testing || (dailyDone && !reviewMode));
-  toggleHidden(els.testPanel, !testing);
+  toggleHidden(els.testPanel, !test.active);
+  toggleHidden(els.storyPanel, !storyState.active);
 }
 
 function renderSettings() {
-  toggleHidden(els.settingsPanel, !settingsOpen || test.active);
+  toggleHidden(els.settingsPanel, !settingsOpen || test.active || storyState.active);
   els.dailyCountSelect.value = String(state.settings.dailyCount);
   els.testIntervalSelect.value = String(state.settings.testInterval);
   els.autoSpeakToggle.checked = state.settings.autoSpeak;
 }
 
 function renderCard() {
-  if (test.active) return;
+  if (test.active || storyState.active) return;
 
   var day = state.days[today];
   var current = session[index];
@@ -308,13 +334,29 @@ function startTodayListeningReview() {
 
 function startChoiceTest(pool, listening, title) {
   if (!pool.length) return;
+  pauseStoryAudio();
+  storyState.active = false;
   test = { active: true, listening: listening, showWord: !listening, title: title, questions: [], index: 0, score: 0, answered: false };
   for (var i = 0; i < pool.length; i += 1) test.questions.push(makeQuestion(pool[i]));
   render();
 }
 
 function closeTest() {
+  pauseCurrentAudio();
   test.active = false;
+  render();
+}
+
+function openStoryPractice() {
+  if (!window.LISTENING_STORIES || !window.LISTENING_STORIES.length) return;
+  pauseCurrentAudio();
+  storyState = { active: true, storyIndex: 0, lineIndex: 0, showCn: false, playing: false, audio: null };
+  render();
+}
+
+function closeStoryPractice() {
+  pauseStoryAudio();
+  storyState.active = false;
   render();
 }
 
@@ -403,6 +445,146 @@ function renderTest() {
   }
   if (test.listening) forceAutoSpeak("listen-" + question.word.id + "-" + test.index, question.word.word);
   else autoSpeak("test-" + question.word.id + "-" + test.index, question.word.word);
+}
+
+function renderStory() {
+  if (!storyState.active || !window.LISTENING_STORIES || !window.LISTENING_STORIES.length) return;
+  var story = getCurrentStory();
+  var line = getCurrentStoryLine();
+  renderStoryList();
+  if (!story || !line) return;
+  els.storyTitle.textContent = story.title;
+  els.storyProgressText.textContent = String(storyState.lineIndex + 1) + " / " + String(story.lines.length);
+  els.storySentenceText.textContent = line.my;
+  els.storyCnText.textContent = line.cn;
+  toggleHidden(els.storyCnText, !storyState.showCn);
+  els.storyShowCnButton.textContent = storyState.showCn ? "隐藏中文" : "显示中文";
+  els.storyPlayButton.textContent = storyState.playing ? "暂停" : "播放";
+  els.storyPrevButton.disabled = storyState.lineIndex <= 0;
+  els.storyNextButton.disabled = storyState.lineIndex >= story.lines.length - 1;
+  els.storyStatus.textContent = storyState.playing ? "正在朗读" : "逐句听，听不懂就重听";
+}
+
+function renderStoryList() {
+  els.storyList.innerHTML = "";
+  var stories = window.LISTENING_STORIES || [];
+  for (var i = 0; i < stories.length; i += 1) {
+    appendStoryButton(stories[i], i);
+  }
+}
+
+function appendStoryButton(story, storyIndex) {
+  var button = document.createElement("button");
+  button.className = "story-chip";
+  button.type = "button";
+  button.textContent = story.title;
+  button.classList.toggle("active", storyIndex === storyState.storyIndex);
+  button.addEventListener("click", function () {
+    pauseStoryAudio();
+    storyState.storyIndex = storyIndex;
+    storyState.lineIndex = 0;
+    storyState.showCn = false;
+    renderStory();
+  });
+  els.storyList.appendChild(button);
+}
+
+function getCurrentStory() {
+  var stories = window.LISTENING_STORIES || [];
+  return stories[storyState.storyIndex] || stories[0];
+}
+
+function getCurrentStoryLine() {
+  var story = getCurrentStory();
+  if (!story || !story.lines || !story.lines.length) return null;
+  return story.lines[storyState.lineIndex] || story.lines[0];
+}
+
+function toggleStoryPlay() {
+  if (storyState.audio && storyState.playing) {
+    storyState.audio.pause();
+    storyState.playing = false;
+    renderStory();
+    return;
+  }
+  if (storyState.audio && !storyState.playing) {
+    storyState.audio.play().catch(function () {
+      setStoryStatus("播放失败，请检查网络或声音权限");
+    });
+    storyState.playing = true;
+    renderStory();
+    return;
+  }
+  playStoryLine(false);
+}
+
+function replayStoryLine() {
+  playStoryLine(true);
+}
+
+function playStoryLine(restart) {
+  var line = getCurrentStoryLine();
+  if (!line) return;
+  if (restart) pauseStoryAudio();
+  storyState.audio = playOnlineMyanmarAudio(line.my, function () {
+    storyState.playing = false;
+    setStoryStatus("在线缅语发音失败，请检查网络或浏览器声音权限");
+    renderStory();
+  }, {
+    rate: getStoryRate(),
+    onPlaying: function () {
+      storyState.playing = true;
+      setStoryStatus("正在朗读");
+      renderStory();
+    },
+    onEnded: function () {
+      storyState.playing = false;
+      storyState.audio = null;
+      renderStory();
+    }
+  });
+}
+
+function previousStoryLine() {
+  if (storyState.lineIndex <= 0) return;
+  pauseStoryAudio();
+  storyState.lineIndex -= 1;
+  storyState.showCn = false;
+  renderStory();
+}
+
+function nextStoryLine() {
+  var story = getCurrentStory();
+  if (!story || storyState.lineIndex >= story.lines.length - 1) return;
+  pauseStoryAudio();
+  storyState.lineIndex += 1;
+  storyState.showCn = false;
+  renderStory();
+}
+
+function toggleStoryChinese() {
+  storyState.showCn = !storyState.showCn;
+  renderStory();
+}
+
+function updateStorySpeed() {
+  if (storyState.audio) storyState.audio.playbackRate = getStoryRate();
+}
+
+function getStoryRate() {
+  return Number(els.storySpeedSelect.value || 1);
+}
+
+function pauseStoryAudio() {
+  if (storyState.audio) {
+    storyState.audio.pause();
+    storyState.audio = null;
+  }
+  storyState.playing = false;
+}
+
+function setStoryStatus(text) {
+  if (els.storyStatus) els.storyStatus.textContent = text || "";
 }
 
 function appendChoiceButton(choice) {
@@ -515,23 +697,23 @@ function speakText(text) {
   });
 }
 
-function playOnlineMyanmarAudio(text, onFail) {
+function playOnlineMyanmarAudio(text, onFail, options) {
   if (!("Audio" in window)) {
     onFail();
-    return;
+    return null;
   }
-  if (currentAudio) {
-    currentAudio.pause();
-    currentAudio = null;
-  }
+  pauseCurrentAudio();
   var url = makeTtsUrl(text);
   var audio = new Audio(url);
   var settled = false;
   currentAudio = audio;
   audio.preload = "auto";
+  if (options && options.rate) audio.playbackRate = options.rate;
   audio.onplaying = function () {
+    if (settled) return;
     settled = true;
     setAudioStatus("在线缅语发音");
+    if (options && options.onPlaying) options.onPlaying(audio);
   };
   audio.onerror = function () {
     if (settled) return;
@@ -541,6 +723,7 @@ function playOnlineMyanmarAudio(text, onFail) {
   };
   audio.onended = function () {
     if (currentAudio === audio) currentAudio = null;
+    if (options && options.onEnded) options.onEnded(audio);
   };
   audio.play().catch(function () {
     if (settled) return;
@@ -554,6 +737,14 @@ function playOnlineMyanmarAudio(text, onFail) {
     if (currentAudio === audio) currentAudio = null;
     onFail();
   }, 2600);
+  return audio;
+}
+
+function pauseCurrentAudio() {
+  if (currentAudio) {
+    currentAudio.pause();
+    currentAudio = null;
+  }
 }
 
 function makeTtsUrl(text) {

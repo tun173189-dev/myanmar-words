@@ -121,6 +121,11 @@ h1 {
   background: #2f6f5e;
 }
 
+.story-entry {
+  grid-column: 1 / -1;
+  background: #6b5944;
+}
+
 .settings-panel {
   padding: 14px;
   border: 1px solid rgba(77, 66, 52, 0.1);
@@ -305,7 +310,8 @@ button:disabled {
   cursor: not-allowed;
 }
 
-.test-panel {
+.test-panel,
+.story-panel {
   padding: 20px;
   border-radius: 8px;
   background: #fffaf1;
@@ -371,6 +377,81 @@ button:disabled {
   text-align: center;
 }
 
+.story-list {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 2px;
+}
+
+.story-chip {
+  min-height: 36px;
+  padding: 0 12px;
+  border-radius: 999px;
+  background: #efe7dc;
+  color: #4d4137;
+  font-size: 13px;
+  font-weight: 750;
+  white-space: nowrap;
+}
+
+.story-chip.active {
+  background: #2f6f5e;
+  color: white;
+}
+
+.story-card {
+  min-height: 210px;
+  padding: 18px;
+  border-radius: 8px;
+  background: #f3eadf;
+  display: grid;
+  align-content: center;
+  gap: 12px;
+  text-align: center;
+}
+
+.story-progress {
+  color: #756a60;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.story-sentence {
+  color: #27231e;
+  font-size: 30px;
+  font-weight: 800;
+  line-height: 1.28;
+  overflow-wrap: anywhere;
+}
+
+.story-cn {
+  color: #62574d;
+  font-size: 17px;
+  line-height: 1.5;
+}
+
+.story-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.speed-control {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #4a4036;
+  font-weight: 750;
+}
+
+.story-controls {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
 .hidden {
   display: none !important;
 }
@@ -391,5 +472,9 @@ button:disabled {
   .card-area,
   .word-card {
     min-height: 330px;
+  }
+
+  .story-sentence {
+    font-size: 26px;
   }
 }

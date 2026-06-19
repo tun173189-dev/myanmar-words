@@ -1,10 +1,12 @@
-const CACHE_NAME = "daily-myanmar-words-v23";
+const CACHE_NAME = "daily-myanmar-words-v26";
 const ASSETS = [
   "./",
   "./index.html",
   "./styles.css",
   "./words.js",
   "./words-extra.js",
+  "./words-generated.js",
+  "./stories.js",
   "./app.js",
   "./manifest.webmanifest",
   "./icon.svg",

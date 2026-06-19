@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#f7f3ea" />
     <title>每日缅语词</title>
-    <link rel="manifest" href="manifest.webmanifest?v=23" />
+    <link rel="manifest" href="manifest.webmanifest?v=26" />
     <style>
 :root {
   color-scheme: light;
@@ -128,6 +128,11 @@ h1 {
 
 .listen-entry {
   background: #2f6f5e;
+}
+
+.story-entry {
+  grid-column: 1 / -1;
+  background: #6b5944;
 }
 
 .settings-panel {
@@ -314,7 +319,8 @@ button:disabled {
   cursor: not-allowed;
 }
 
-.test-panel {
+.test-panel,
+.story-panel {
   padding: 20px;
   border-radius: 8px;
   background: #fffaf1;
@@ -380,6 +386,81 @@ button:disabled {
   text-align: center;
 }
 
+.story-list {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 2px;
+}
+
+.story-chip {
+  min-height: 36px;
+  padding: 0 12px;
+  border-radius: 999px;
+  background: #efe7dc;
+  color: #4d4137;
+  font-size: 13px;
+  font-weight: 750;
+  white-space: nowrap;
+}
+
+.story-chip.active {
+  background: #2f6f5e;
+  color: white;
+}
+
+.story-card {
+  min-height: 210px;
+  padding: 18px;
+  border-radius: 8px;
+  background: #f3eadf;
+  display: grid;
+  align-content: center;
+  gap: 12px;
+  text-align: center;
+}
+
+.story-progress {
+  color: #756a60;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.story-sentence {
+  color: #27231e;
+  font-size: 30px;
+  font-weight: 800;
+  line-height: 1.28;
+  overflow-wrap: anywhere;
+}
+
+.story-cn {
+  color: #62574d;
+  font-size: 17px;
+  line-height: 1.5;
+}
+
+.story-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.speed-control {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #4a4036;
+  font-weight: 750;
+}
+
+.story-controls {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
 .hidden {
   display: none !important;
 }
@@ -400,6 +481,10 @@ button:disabled {
   .card-area,
   .word-card {
     min-height: 330px;
+  }
+
+  .story-sentence {
+    font-size: 26px;
   }
 }
     </style>
@@ -451,6 +536,7 @@ button:disabled {
       <div class="test-actions">
         <button class="test-entry" id="startTestButton" type="button">本周小测</button>
         <button class="test-entry listen-entry" id="startListeningTestButton" type="button">听力小测</button>
+        <button class="test-entry story-entry" id="startStoryButton" type="button">听力故事</button>
       </div>
 
       <section class="settings-panel hidden" id="settingsPanel" aria-label="设置">
@@ -460,6 +546,8 @@ button:disabled {
             <option value="10">10 个</option>
             <option value="15">15 个</option>
             <option value="20">20 个</option>
+            <option value="30">30 个</option>
+            <option value="50">50 个</option>
           </select>
         </div>
         <div class="setting-row">
@@ -509,6 +597,39 @@ button:disabled {
         <button class="test-speak hidden" id="showTestWordButton" type="button">显示文字</button>
         <div class="choice-list" id="choiceList"></div>
         <p class="test-feedback" id="testFeedback"></p>
+      </section>
+
+      <section class="story-panel hidden" id="storyPanel" aria-live="polite">
+        <div class="test-head">
+          <div>
+            <p class="eyebrow">小故事听力</p>
+            <h2 id="storyTitle">办事对话</h2>
+          </div>
+          <button class="icon-button" id="closeStoryButton" type="button" aria-label="退出听力故事" title="退出听力故事">×</button>
+        </div>
+        <div class="story-list" id="storyList" aria-label="选择故事"></div>
+        <div class="story-card">
+          <p class="story-progress" id="storyProgressText">1 / 8</p>
+          <p class="story-sentence" id="storySentenceText">မင်္ဂလာပါ။</p>
+          <p class="story-cn hidden" id="storyCnText">你好。</p>
+        </div>
+        <div class="story-toolbar">
+          <label class="speed-control" for="storySpeedSelect">
+            <span>速度</span>
+            <select id="storySpeedSelect">
+              <option value="0.75">慢速</option>
+              <option value="1" selected>正常</option>
+            </select>
+          </label>
+          <button class="test-speak" id="storyShowCnButton" type="button">显示中文</button>
+        </div>
+        <div class="story-controls">
+          <button class="secondary" id="storyPrevButton" type="button">上一句</button>
+          <button class="primary" id="storyPlayButton" type="button">播放</button>
+          <button class="secondary" id="storyReplayButton" type="button">再听一遍</button>
+          <button class="primary" id="storyNextButton" type="button">下一句</button>
+        </div>
+        <p class="test-feedback" id="storyStatus">逐句听，听不懂就重听</p>
       </section>
     </main>
 
@@ -819,6 +940,290 @@ window.EXTRA_WORDS = [
   { id: 300, word: "ရောက်ရင် ပြောပါ", phonetic: "yauk yin pyaw ba", meaning: "到了请告诉我", example: "ရောက်ရင် ပြောပါ။", exampleCn: "到了请告诉我。" }
 ];
 
+(function () {
+  var items = [
+    { my: "နိုင်ငံကူးလက်မှတ်", cn: "护照", cat: "政府办事" },
+    { my: "ဗီဇာ", cn: "签证", cat: "政府办事" },
+    { my: "မှတ်ပုံတင်", cn: "身份证", cat: "政府办事" },
+    { my: "ဖောင်", cn: "表格", cat: "政府办事" },
+    { my: "မိတ္တူ", cn: "复印件", cat: "政府办事" },
+    { my: "လက်မှတ်", cn: "签名 / 票", cat: "政府办事" },
+    { my: "ရက်ချိန်း", cn: "预约 / 日期", cat: "政府办事" },
+    { my: "တန်းစီနံပါတ်", cn: "排队号码", cat: "政府办事" },
+    { my: "ကောင်တာ", cn: "柜台", cat: "政府办事" },
+    { my: "ပြေစာ", cn: "收据", cat: "政府办事" },
+    { my: "ဝန်ဆောင်ခ", cn: "手续费", cat: "政府办事" },
+    { my: "အခွန်", cn: "税费", cat: "政府办事" },
+    { my: "ဒဏ်ငွေ", cn: "罚款", cat: "政府办事" },
+    { my: "ထောက်ခံစာ", cn: "证明信", cat: "政府办事" },
+    { my: "အိမ်ထောင်စုစာရင်း", cn: "户口 / 家庭登记", cat: "政府办事" },
+    { my: "လိပ်စာ", cn: "地址", cat: "政府办事" },
+    { my: "ရုံး", cn: "办公室 / 政府部门", cat: "政府办事" },
+    { my: "တာဝန်ရှိသူ", cn: "负责人", cat: "政府办事" },
+    { my: "ခွင့်ပြုချက်", cn: "许可 / 批准", cat: "政府办事" },
+    { my: "လိုင်စင်", cn: "许可证 / 驾照", cat: "政府办事" },
+    { my: "ဘဏ်အကောင့်", cn: "银行账户", cat: "银行支付" },
+    { my: "ငွေလွှဲ", cn: "转账", cat: "银行支付" },
+    { my: "ငွေထုတ်", cn: "取钱", cat: "银行支付" },
+    { my: "ငွေသွင်း", cn: "存钱", cat: "银行支付" },
+    { my: "အတိုး", cn: "利息", cat: "银行支付" },
+    { my: "ကတ်", cn: "银行卡 / 卡", cat: "银行支付" },
+    { my: "စကားဝှက်", cn: "密码", cat: "银行支付" },
+    { my: "ငွေလက်ခံ", cn: "收款", cat: "银行支付" },
+    { my: "ငွေပေးချေ", cn: "付款", cat: "银行支付" },
+    { my: "အွန်လိုင်းပေးချေမှု", cn: "线上支付", cat: "银行支付" },
+    { my: "ဆင်းမ်ကတ်", cn: "手机卡", cat: "手机通信" },
+    { my: "ဖုန်းဘေလ်", cn: "话费", cat: "手机通信" },
+    { my: "အင်တာနက်", cn: "网络", cat: "手机通信" },
+    { my: "ဒေတာ", cn: "流量", cat: "手机通信" },
+    { my: "ဖုန်းနံပါတ်", cn: "电话号码", cat: "手机通信" },
+    { my: "မက်ဆေ့ခ်ျ", cn: "短信", cat: "手机通信" },
+    { my: "ခေါ်ဆိုမှု", cn: "电话通话", cat: "手机通信" },
+    { my: "ဝိုင်ဖိုင်", cn: "Wi-Fi", cat: "手机通信" },
+    { my: "အားသွင်းကြိုး", cn: "充电线", cat: "手机通信" },
+    { my: "အားသွင်းစက်", cn: "充电器", cat: "手机通信" },
+    { my: "ဆေးရုံ", cn: "医院", cat: "医疗药店" },
+    { my: "ဆေးခန်း", cn: "诊所", cat: "医疗药店" },
+    { my: "ဆရာဝန်", cn: "医生", cat: "医疗药店" },
+    { my: "သူနာပြု", cn: "护士", cat: "医疗药店" },
+    { my: "ဆေးဆိုင်", cn: "药店", cat: "医疗药店" },
+    { my: "ဆေး", cn: "药", cat: "医疗药店" },
+    { my: "ဆေးစာ", cn: "处方", cat: "医疗药店" },
+    { my: "အဖျား", cn: "发烧", cat: "医疗药店" },
+    { my: "ခေါင်းကိုက်", cn: "头痛", cat: "医疗药店" },
+    { my: "ဗိုက်နာ", cn: "肚子痛", cat: "医疗药店" },
+    { my: "ချောင်းဆိုး", cn: "咳嗽", cat: "医疗药店" },
+    { my: "အာမခံ", cn: "保险", cat: "医疗药店" },
+    { my: "ဟိုတယ်", cn: "酒店", cat: "住宿租房" },
+    { my: "အခန်း", cn: "房间", cat: "住宿租房" },
+    { my: "သော့", cn: "钥匙", cat: "住宿租房" },
+    { my: "ရေချိုးခန်း", cn: "浴室", cat: "住宿租房" },
+    { my: "မီး", cn: "电 / 灯", cat: "住宿租房" },
+    { my: "ရေ", cn: "水", cat: "住宿租房" },
+    { my: "ငှားခ", cn: "租金", cat: "住宿租房" },
+    { my: "အိမ်ရှင်", cn: "房东", cat: "住宿租房" },
+    { my: "သန့်ရှင်းရေး", cn: "清洁", cat: "住宿租房" },
+    { my: "ပြင်ဆင်", cn: "维修", cat: "住宿租房" },
+    { my: "တက္ကစီ", cn: "出租车", cat: "交通出行" },
+    { my: "ဘတ်စ်ကား", cn: "公交车", cat: "交通出行" },
+    { my: "ရထား", cn: "火车", cat: "交通出行" },
+    { my: "မှတ်တိုင်", cn: "车站 / 站点", cat: "交通出行" },
+    { my: "လမ်းဆုံ", cn: "路口", cat: "交通出行" },
+    { my: "ဘယ်ဘက်", cn: "左边", cat: "交通出行" },
+    { my: "ညာဘက်", cn: "右边", cat: "交通出行" },
+    { my: "တည့်တည့်", cn: "直走", cat: "交通出行" },
+    { my: "အနီး", cn: "附近", cat: "交通出行" },
+    { my: "အဝေး", cn: "远处", cat: "交通出行" },
+    { my: "ဈေး", cn: "市场 / 价格", cat: "购物吃饭" },
+    { my: "ဆိုင်", cn: "商店", cat: "购物吃饭" },
+    { my: "လျှော့ဈေး", cn: "折扣", cat: "购物吃饭" },
+    { my: "အရွယ်အစား", cn: "尺寸", cat: "购物吃饭" },
+    { my: "အရောင်", cn: "颜色", cat: "购物吃饭" },
+    { my: "အထုပ်", cn: "袋子 / 包", cat: "购物吃饭" },
+    { my: "စားသောက်ဆိုင်", cn: "餐厅", cat: "购物吃饭" },
+    { my: "မီနူး", cn: "菜单", cat: "购物吃饭" },
+    { my: "ထမင်း", cn: "米饭", cat: "购物吃饭" },
+    { my: "ဟင်း", cn: "菜 / 咖喱", cat: "购物吃饭" },
+    { my: "အချို", cn: "甜", cat: "购物吃饭" },
+    { my: "အစပ်", cn: "辣", cat: "购物吃饭" },
+    { my: "ရေခဲ", cn: "冰", cat: "购物吃饭" },
+    { my: "အလုပ်", cn: "工作", cat: "工作社交" },
+    { my: "အစည်းအဝေး", cn: "会议", cat: "工作社交" },
+    { my: "သူငယ်ချင်း", cn: "朋友", cat: "工作社交" },
+    { my: "မိသားစု", cn: "家人", cat: "工作社交" },
+    { my: "အချိန်", cn: "时间", cat: "工作社交" },
+    { my: "မနက်ဖြန်", cn: "明天", cat: "工作社交" },
+    { my: "မနေ့က", cn: "昨天", cat: "工作社交" },
+    { my: "အရေးကြီး", cn: "重要", cat: "工作社交" },
+    { my: "အမြန်", cn: "快 / 紧急", cat: "工作社交" },
+    { my: "ဖြည်းဖြည်း", cn: "慢慢地", cat: "工作社交" },
+    { my: "ရဲစခန်း", cn: "警察局", cat: "紧急情况" },
+    { my: "မီးသတ်", cn: "消防", cat: "紧急情况" },
+    { my: "အရေးပေါ်", cn: "紧急", cat: "紧急情况" },
+    { my: "ကူညီပါ", cn: "请帮忙", cat: "紧急情况" },
+    { my: "ပျောက်သွား", cn: "丢失了", cat: "紧急情况" }
+  ];
+
+  var patterns = [
+    function (item) {
+      return { word: item.my, meaning: item.cn, example: "ဒီဟာ " + item.my + " ပါ။", exampleCn: "这是" + item.cn + "。" };
+    },
+    function (item) {
+      return { word: item.my + " လိုပါတယ်", meaning: "需要" + item.cn, example: item.my + " လိုပါတယ်။", exampleCn: "我需要" + item.cn + "。" };
+    },
+    function (item) {
+      return { word: item.my + " ဘယ်မှာလဲ", meaning: item.cn + "在哪里", example: item.my + " ဘယ်မှာလဲ။", exampleCn: item.cn + "在哪里？" };
+    },
+    function (item) {
+      return { word: item.my + " ရှိပါသလား", meaning: "有" + item.cn + "吗", example: item.my + " ရှိပါသလား။", exampleCn: "有" + item.cn + "吗？" };
+    },
+    function (item) {
+      return { word: item.my + " အတွက် အကူအညီ လိုပါတယ်", meaning: "关于" + item.cn + "需要帮助", example: item.my + " အတွက် အကူအညီ လိုပါတယ်။", exampleCn: "关于" + item.cn + "我需要帮助。" };
+    },
+    function (item) {
+      return { word: item.my + " ကို နားမလည်ပါဘူး", meaning: "不明白" + item.cn, example: item.my + " ကို နားမလည်ပါဘူး။", exampleCn: "我不明白" + item.cn + "。" };
+    },
+    function (item) {
+      return { word: item.my + " နဲ့ ပတ်သက်ပြီး ပြောပြပါ", meaning: "请说明关于" + item.cn + "的事情", example: item.my + " နဲ့ ပတ်သက်ပြီး ပြောပြပါ။", exampleCn: "请说明关于" + item.cn + "的事情。" };
+    }
+  ];
+
+  var generated = [];
+  var id = 301;
+  for (var i = 0; i < items.length && id <= 1000; i += 1) {
+    for (var p = 0; p < patterns.length && id <= 1000; p += 1) {
+      var phrase = patterns[p](items[i]);
+      generated.push({
+        id: id,
+        word: phrase.word,
+        phonetic: "",
+        meaning: phrase.meaning,
+        example: phrase.example,
+        exampleCn: phrase.exampleCn,
+        category: items[i].cat
+      });
+      id += 1;
+    }
+  }
+
+  window.EXTRA_WORDS = (window.EXTRA_WORDS || []).concat(generated);
+})();
+
+window.LISTENING_STORIES = [
+  {
+    title: "办证窗口",
+    lines: [
+      { my: "မင်္ဂလာပါ၊ မှတ်ပုံတင် မိတ္တူ လိုပါတယ်။", cn: "你好，我需要身份证复印件。" },
+      { my: "ဖောင်ကို ဒီမှာ ဖြည့်ပါ။", cn: "请在这里填写表格。" },
+      { my: "လက်မှတ် ဒီနေရာမှာ ထိုးပါ။", cn: "请在这里签名。" },
+      { my: "ပြေစာကို သိမ်းထားပါ။", cn: "请保留收据。" },
+      { my: "မနက်ဖြန် ပြန်လာပါ။", cn: "请明天再来。" },
+      { my: "ကျေးဇူးတင်ပါတယ်၊ နားလည်ပါပြီ။", cn: "谢谢，我明白了。" }
+    ]
+  },
+  {
+    title: "打车去办公室",
+    lines: [
+      { my: "တက္ကစီ ခေါ်ပေးပါ။", cn: "请帮我叫出租车。" },
+      { my: "ဒီလိပ်စာကို သွားချင်ပါတယ်။", cn: "我想去这个地址。" },
+      { my: "ဘယ်လောက်ကျသလဲ။", cn: "多少钱？" },
+      { my: "နည်းနည်း လျှော့ပေးပါ။", cn: "请便宜一点。" },
+      { my: "ရောက်ရင် ပြောပါ။", cn: "到了请告诉我。" },
+      { my: "ဒီမှာ ဆင်းပါမယ်။", cn: "我在这里下车。" }
+    ]
+  },
+  {
+    title: "市场买东西",
+    lines: [
+      { my: "ဒီဟာ ဘယ်လောက်လဲ။", cn: "这个多少钱？" },
+      { my: "နှစ်ခု ယူပါမယ်။", cn: "我要两个。" },
+      { my: "လျှော့ဈေး ရှိပါသလား။", cn: "有折扣吗？" },
+      { my: "အထုပ် တစ်ခု ပေးပါ။", cn: "请给我一个袋子。" },
+      { my: "ငွေပေးချေပါမယ်။", cn: "我要付款。" },
+      { my: "ကျေးဇူးတင်ပါတယ်။", cn: "谢谢。" }
+    ]
+  },
+  {
+    title: "餐厅点餐",
+    lines: [
+      { my: "မီနူး ပေးပါ။", cn: "请给我菜单。" },
+      { my: "ဒီဟင်းက အစပ်လား။", cn: "这道菜辣吗？" },
+      { my: "အစပ် မစားနိုင်ပါဘူး။", cn: "我不能吃辣。" },
+      { my: "ရေတစ်ခွက် ပေးပါ။", cn: "请给我一杯水。" },
+      { my: "ထုပ်ပေးပါ။", cn: "请打包。" },
+      { my: "ငွေရှင်းပါမယ်။", cn: "我要结账。" }
+    ]
+  },
+  {
+    title: "药店买药",
+    lines: [
+      { my: "ခေါင်းကိုက်ပါတယ်။", cn: "我头痛。" },
+      { my: "ဆေး ရှိပါသလား။", cn: "有药吗？" },
+      { my: "ဘယ်လို သောက်ရမလဲ။", cn: "应该怎么吃？" },
+      { my: "တစ်နေ့ ဘယ်နှစ်ကြိမ် သောက်ရမလဲ။", cn: "一天吃几次？" },
+      { my: "ဘေးထွက်ဆိုးကျိုး ရှိပါသလား။", cn: "有副作用吗？" },
+      { my: "ကျေးဇူးတင်ပါတယ်။", cn: "谢谢。" }
+    ]
+  },
+  {
+    title: "酒店入住",
+    lines: [
+      { my: "အခန်း ကြိုတင်မှာထားပါတယ်။", cn: "我预订了房间。" },
+      { my: "နိုင်ငံကူးလက်မှတ် ပေးပါမယ်။", cn: "我给你护照。" },
+      { my: "အခန်းသော့ ပေးပါ။", cn: "请给我房间钥匙。" },
+      { my: "ဝိုင်ဖိုင် စကားဝှက် ဘာလဲ။", cn: "Wi-Fi 密码是什么？" },
+      { my: "မနက်စာ ပါသလား။", cn: "包含早餐吗？" },
+      { my: "မနက်ဖြန် ထွက်ပါမယ်။", cn: "我明天退房。" }
+    ]
+  },
+  {
+    title: "银行开户",
+    lines: [
+      { my: "ဘဏ်အကောင့် ဖွင့်ချင်ပါတယ်။", cn: "我想开银行账户。" },
+      { my: "ဘာစာရွက်စာတမ်း လိုပါသလဲ။", cn: "需要什么文件？" },
+      { my: "ဖောင်ကို ဖြည့်ပါမယ်။", cn: "我来填写表格。" },
+      { my: "ဖုန်းနံပါတ် ဒီမှာ ရေးပါမယ်။", cn: "我把电话号码写在这里。" },
+      { my: "ကတ်ကို ဘယ်တော့ ရမလဲ။", cn: "什么时候能拿到卡？" },
+      { my: "ကျေးဇူးတင်ပါတယ်။", cn: "谢谢。" }
+    ]
+  },
+  {
+    title: "买手机卡",
+    lines: [
+      { my: "ဆင်းမ်ကတ် ဝယ်ချင်ပါတယ်။", cn: "我想买手机卡。" },
+      { my: "အင်တာနက် ဒေတာ လိုပါတယ်။", cn: "我需要上网流量。" },
+      { my: "တစ်လ ဘယ်လောက်ကျသလဲ။", cn: "一个月多少钱？" },
+      { my: "မှတ်ပုံတင် လိုပါသလား။", cn: "需要身份证吗？" },
+      { my: "ဖုန်းထဲ ထည့်ပေးပါ။", cn: "请帮我装到手机里。" },
+      { my: "စမ်းကြည့်ပါမယ်။", cn: "我试一下。" }
+    ]
+  },
+  {
+    title: "问路",
+    lines: [
+      { my: "ဒီနေရာကို သွားချင်ပါတယ်။", cn: "我想去这个地方。" },
+      { my: "ဘယ်လမ်းက သွားရမလဲ။", cn: "应该走哪条路？" },
+      { my: "တည့်တည့် သွားပါ။", cn: "请直走。" },
+      { my: "လမ်းဆုံမှာ ဘယ်ဘက် ချိုးပါ။", cn: "在路口左转。" },
+      { my: "အနီးမှာ ရှိပါသလား။", cn: "在附近吗？" },
+      { my: "ကျေးဇူးတင်ပါတယ်။", cn: "谢谢。" }
+    ]
+  },
+  {
+    title: "看医生",
+    lines: [
+      { my: "ဆရာဝန်နဲ့ တွေ့ချင်ပါတယ်။", cn: "我想见医生。" },
+      { my: "အဖျား ရှိပါတယ်။", cn: "我发烧。" },
+      { my: "ချောင်းဆိုးလည်း ရှိပါတယ်။", cn: "也有咳嗽。" },
+      { my: "ဆေးစာ ပေးပါသလား။", cn: "会给处方吗？" },
+      { my: "ဘယ်အချိန် ပြန်လာရမလဲ။", cn: "什么时候需要回来复诊？" },
+      { my: "နားလည်ပါပြီ။", cn: "我明白了。" }
+    ]
+  },
+  {
+    title: "租房沟通",
+    lines: [
+      { my: "အခန်း ငှားချင်ပါတယ်။", cn: "我想租房间。" },
+      { my: "ငှားခ ဘယ်လောက်လဲ။", cn: "租金多少钱？" },
+      { my: "ရေနဲ့ မီး ပါသလား။", cn: "水电包含吗？" },
+      { my: "အင်တာနက် ရှိပါသလား။", cn: "有网络吗？" },
+      { my: "ပြင်ဆင်ဖို့ လိုပါတယ်။", cn: "需要维修。" },
+      { my: "မနက်ဖြန် ပြန်ကြည့်ပါမယ်။", cn: "我明天再来看。" }
+    ]
+  },
+  {
+    title: "紧急求助",
+    lines: [
+      { my: "ကူညီပါ။", cn: "请帮忙。" },
+      { my: "ဖုန်း ပျောက်သွားပါတယ်။", cn: "我的手机丢了。" },
+      { my: "ရဲစခန်း ဘယ်မှာလဲ။", cn: "警察局在哪里？" },
+      { my: "ဒီလိပ်စာကို သွားချင်ပါတယ်။", cn: "我想去这个地址。" },
+      { my: "ကျွန်တော် မြန်မာစကား နည်းနည်းပဲ ပြောတတ်ပါတယ်။", cn: "我只会说一点缅语。" },
+      { my: "ဖြည်းဖြည်း ပြောပေးပါ။", cn: "请慢一点说。" }
+    ]
+  }
+];
+
 var TEST_COUNT = 10;
 var STORAGE_KEY = "daily-myanmar-words-state-v11";
 var TTS_PROXY_URL = "https://myanmar-tts.tun173189.workers.dev/tts";
@@ -859,6 +1264,7 @@ var els = {
   autoSpeakToggle: document.querySelector("#autoSpeakToggle"),
   startTestButton: document.querySelector("#startTestButton"),
   startListeningTestButton: document.querySelector("#startListeningTestButton"),
+  startStoryButton: document.querySelector("#startStoryButton"),
   testPanel: document.querySelector("#testPanel"),
   testTitleText: document.querySelector("#testTitleText"),
   testProgressText: document.querySelector("#testProgressText"),
@@ -867,7 +1273,21 @@ var els = {
   showTestWordButton: document.querySelector("#showTestWordButton"),
   choiceList: document.querySelector("#choiceList"),
   testFeedback: document.querySelector("#testFeedback"),
-  closeTestButton: document.querySelector("#closeTestButton")
+  closeTestButton: document.querySelector("#closeTestButton"),
+  storyPanel: document.querySelector("#storyPanel"),
+  storyList: document.querySelector("#storyList"),
+  storyTitle: document.querySelector("#storyTitle"),
+  storyProgressText: document.querySelector("#storyProgressText"),
+  storySentenceText: document.querySelector("#storySentenceText"),
+  storyCnText: document.querySelector("#storyCnText"),
+  storyStatus: document.querySelector("#storyStatus"),
+  storySpeedSelect: document.querySelector("#storySpeedSelect"),
+  storyPlayButton: document.querySelector("#storyPlayButton"),
+  storyReplayButton: document.querySelector("#storyReplayButton"),
+  storyPrevButton: document.querySelector("#storyPrevButton"),
+  storyNextButton: document.querySelector("#storyNextButton"),
+  storyShowCnButton: document.querySelector("#storyShowCnButton"),
+  closeStoryButton: document.querySelector("#closeStoryButton")
 };
 
 if (window.EXTRA_WORDS && window.EXTRA_WORDS.length) {
@@ -884,6 +1304,7 @@ var index = reviewMode ? firstReviewUnansweredIndex() : firstUnansweredIndex();
 var lastAutoSpokenKey = "";
 var settingsOpen = false;
 var test = { active: false, listening: false, showWord: true, title: "小测", questions: [], index: 0, score: 0, answered: false };
+var storyState = { active: false, storyIndex: 0, lineIndex: 0, showCn: false, playing: false, audio: null };
 var currentAudio = null;
 
 bindEvents();
@@ -917,9 +1338,17 @@ function bindEvents() {
   els.autoSpeakToggle.addEventListener("change", updateSettings);
   els.startTestButton.addEventListener("click", startTest);
   els.startListeningTestButton.addEventListener("click", startListeningTest);
+  els.startStoryButton.addEventListener("click", openStoryPractice);
   els.closeTestButton.addEventListener("click", closeTest);
   els.speakTestButton.addEventListener("click", speakCurrentTestWord);
   els.showTestWordButton.addEventListener("click", showListeningWord);
+  els.closeStoryButton.addEventListener("click", closeStoryPractice);
+  els.storyPlayButton.addEventListener("click", toggleStoryPlay);
+  els.storyReplayButton.addEventListener("click", replayStoryLine);
+  els.storyPrevButton.addEventListener("click", previousStoryLine);
+  els.storyNextButton.addEventListener("click", nextStoryLine);
+  els.storyShowCnButton.addEventListener("click", toggleStoryChinese);
+  els.storySpeedSelect.addEventListener("change", updateStorySpeed);
 }
 
 function loadState() {
@@ -1023,10 +1452,11 @@ function render() {
   renderMode();
   renderCard();
   renderTest();
+  renderStory();
 }
 
 function renderMode() {
-  var testing = test.active;
+  var testing = test.active || storyState.active;
   var day = state.days[today];
   var dailyDone = !!(day && day.completed);
   toggleHidden(document.querySelector(".stats"), testing);
@@ -1035,18 +1465,19 @@ function renderMode() {
   toggleHidden(document.querySelector(".test-actions"), testing);
   toggleHidden(document.querySelector(".card-area"), testing || (dailyDone && !reviewMode));
   toggleHidden(document.querySelector(".actions"), testing || (dailyDone && !reviewMode));
-  toggleHidden(els.testPanel, !testing);
+  toggleHidden(els.testPanel, !test.active);
+  toggleHidden(els.storyPanel, !storyState.active);
 }
 
 function renderSettings() {
-  toggleHidden(els.settingsPanel, !settingsOpen || test.active);
+  toggleHidden(els.settingsPanel, !settingsOpen || test.active || storyState.active);
   els.dailyCountSelect.value = String(state.settings.dailyCount);
   els.testIntervalSelect.value = String(state.settings.testInterval);
   els.autoSpeakToggle.checked = state.settings.autoSpeak;
 }
 
 function renderCard() {
-  if (test.active) return;
+  if (test.active || storyState.active) return;
 
   var day = state.days[today];
   var current = session[index];
@@ -1129,13 +1560,29 @@ function startTodayListeningReview() {
 
 function startChoiceTest(pool, listening, title) {
   if (!pool.length) return;
+  pauseStoryAudio();
+  storyState.active = false;
   test = { active: true, listening: listening, showWord: !listening, title: title, questions: [], index: 0, score: 0, answered: false };
   for (var i = 0; i < pool.length; i += 1) test.questions.push(makeQuestion(pool[i]));
   render();
 }
 
 function closeTest() {
+  pauseCurrentAudio();
   test.active = false;
+  render();
+}
+
+function openStoryPractice() {
+  if (!window.LISTENING_STORIES || !window.LISTENING_STORIES.length) return;
+  pauseCurrentAudio();
+  storyState = { active: true, storyIndex: 0, lineIndex: 0, showCn: false, playing: false, audio: null };
+  render();
+}
+
+function closeStoryPractice() {
+  pauseStoryAudio();
+  storyState.active = false;
   render();
 }
 
@@ -1224,6 +1671,146 @@ function renderTest() {
   }
   if (test.listening) forceAutoSpeak("listen-" + question.word.id + "-" + test.index, question.word.word);
   else autoSpeak("test-" + question.word.id + "-" + test.index, question.word.word);
+}
+
+function renderStory() {
+  if (!storyState.active || !window.LISTENING_STORIES || !window.LISTENING_STORIES.length) return;
+  var story = getCurrentStory();
+  var line = getCurrentStoryLine();
+  renderStoryList();
+  if (!story || !line) return;
+  els.storyTitle.textContent = story.title;
+  els.storyProgressText.textContent = String(storyState.lineIndex + 1) + " / " + String(story.lines.length);
+  els.storySentenceText.textContent = line.my;
+  els.storyCnText.textContent = line.cn;
+  toggleHidden(els.storyCnText, !storyState.showCn);
+  els.storyShowCnButton.textContent = storyState.showCn ? "隐藏中文" : "显示中文";
+  els.storyPlayButton.textContent = storyState.playing ? "暂停" : "播放";
+  els.storyPrevButton.disabled = storyState.lineIndex <= 0;
+  els.storyNextButton.disabled = storyState.lineIndex >= story.lines.length - 1;
+  els.storyStatus.textContent = storyState.playing ? "正在朗读" : "逐句听，听不懂就重听";
+}
+
+function renderStoryList() {
+  els.storyList.innerHTML = "";
+  var stories = window.LISTENING_STORIES || [];
+  for (var i = 0; i < stories.length; i += 1) {
+    appendStoryButton(stories[i], i);
+  }
+}
+
+function appendStoryButton(story, storyIndex) {
+  var button = document.createElement("button");
+  button.className = "story-chip";
+  button.type = "button";
+  button.textContent = story.title;
+  button.classList.toggle("active", storyIndex === storyState.storyIndex);
+  button.addEventListener("click", function () {
+    pauseStoryAudio();
+    storyState.storyIndex = storyIndex;
+    storyState.lineIndex = 0;
+    storyState.showCn = false;
+    renderStory();
+  });
+  els.storyList.appendChild(button);
+}
+
+function getCurrentStory() {
+  var stories = window.LISTENING_STORIES || [];
+  return stories[storyState.storyIndex] || stories[0];
+}
+
+function getCurrentStoryLine() {
+  var story = getCurrentStory();
+  if (!story || !story.lines || !story.lines.length) return null;
+  return story.lines[storyState.lineIndex] || story.lines[0];
+}
+
+function toggleStoryPlay() {
+  if (storyState.audio && storyState.playing) {
+    storyState.audio.pause();
+    storyState.playing = false;
+    renderStory();
+    return;
+  }
+  if (storyState.audio && !storyState.playing) {
+    storyState.audio.play().catch(function () {
+      setStoryStatus("播放失败，请检查网络或声音权限");
+    });
+    storyState.playing = true;
+    renderStory();
+    return;
+  }
+  playStoryLine(false);
+}
+
+function replayStoryLine() {
+  playStoryLine(true);
+}
+
+function playStoryLine(restart) {
+  var line = getCurrentStoryLine();
+  if (!line) return;
+  if (restart) pauseStoryAudio();
+  storyState.audio = playOnlineMyanmarAudio(line.my, function () {
+    storyState.playing = false;
+    setStoryStatus("在线缅语发音失败，请检查网络或浏览器声音权限");
+    renderStory();
+  }, {
+    rate: getStoryRate(),
+    onPlaying: function () {
+      storyState.playing = true;
+      setStoryStatus("正在朗读");
+      renderStory();
+    },
+    onEnded: function () {
+      storyState.playing = false;
+      storyState.audio = null;
+      renderStory();
+    }
+  });
+}
+
+function previousStoryLine() {
+  if (storyState.lineIndex <= 0) return;
+  pauseStoryAudio();
+  storyState.lineIndex -= 1;
+  storyState.showCn = false;
+  renderStory();
+}
+
+function nextStoryLine() {
+  var story = getCurrentStory();
+  if (!story || storyState.lineIndex >= story.lines.length - 1) return;
+  pauseStoryAudio();
+  storyState.lineIndex += 1;
+  storyState.showCn = false;
+  renderStory();
+}
+
+function toggleStoryChinese() {
+  storyState.showCn = !storyState.showCn;
+  renderStory();
+}
+
+function updateStorySpeed() {
+  if (storyState.audio) storyState.audio.playbackRate = getStoryRate();
+}
+
+function getStoryRate() {
+  return Number(els.storySpeedSelect.value || 1);
+}
+
+function pauseStoryAudio() {
+  if (storyState.audio) {
+    storyState.audio.pause();
+    storyState.audio = null;
+  }
+  storyState.playing = false;
+}
+
+function setStoryStatus(text) {
+  if (els.storyStatus) els.storyStatus.textContent = text || "";
 }
 
 function appendChoiceButton(choice) {
@@ -1336,23 +1923,23 @@ function speakText(text) {
   });
 }
 
-function playOnlineMyanmarAudio(text, onFail) {
+function playOnlineMyanmarAudio(text, onFail, options) {
   if (!("Audio" in window)) {
     onFail();
-    return;
+    return null;
   }
-  if (currentAudio) {
-    currentAudio.pause();
-    currentAudio = null;
-  }
+  pauseCurrentAudio();
   var url = makeTtsUrl(text);
   var audio = new Audio(url);
   var settled = false;
   currentAudio = audio;
   audio.preload = "auto";
+  if (options && options.rate) audio.playbackRate = options.rate;
   audio.onplaying = function () {
+    if (settled) return;
     settled = true;
     setAudioStatus("在线缅语发音");
+    if (options && options.onPlaying) options.onPlaying(audio);
   };
   audio.onerror = function () {
     if (settled) return;
@@ -1362,6 +1949,7 @@ function playOnlineMyanmarAudio(text, onFail) {
   };
   audio.onended = function () {
     if (currentAudio === audio) currentAudio = null;
+    if (options && options.onEnded) options.onEnded(audio);
   };
   audio.play().catch(function () {
     if (settled) return;
@@ -1375,6 +1963,14 @@ function playOnlineMyanmarAudio(text, onFail) {
     if (currentAudio === audio) currentAudio = null;
     onFail();
   }, 2600);
+  return audio;
+}
+
+function pauseCurrentAudio() {
+  if (currentAudio) {
+    currentAudio.pause();
+    currentAudio = null;
+  }
 }
 
 function makeTtsUrl(text) {
@@ -1610,4 +2206,6 @@ function registerServiceWorker() {
     </script>
   </body>
 </html>
+
+
 
