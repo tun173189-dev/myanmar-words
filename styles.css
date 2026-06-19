@@ -432,18 +432,9 @@ button:disabled {
 }
 
 .story-toolbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   gap: 12px;
-}
-
-.speed-control {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  color: #4a4036;
-  font-weight: 750;
 }
 
 .story-controls {

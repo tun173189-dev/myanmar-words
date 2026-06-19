@@ -55,9 +55,9 @@ var els = {
   storySentenceText: document.querySelector("#storySentenceText"),
   storyCnText: document.querySelector("#storyCnText"),
   storyStatus: document.querySelector("#storyStatus"),
-  storySpeedSelect: document.querySelector("#storySpeedSelect"),
   storyPlayButton: document.querySelector("#storyPlayButton"),
   storyReplayButton: document.querySelector("#storyReplayButton"),
+  storySlowButton: document.querySelector("#storySlowButton"),
   storyPrevButton: document.querySelector("#storyPrevButton"),
   storyNextButton: document.querySelector("#storyNextButton"),
   storyShowCnButton: document.querySelector("#storyShowCnButton"),
@@ -79,6 +79,7 @@ var lastAutoSpokenKey = "";
 var settingsOpen = false;
 var test = { active: false, listening: false, showWord: true, title: "小测", questions: [], index: 0, score: 0, answered: false };
 var storyState = { active: false, storyIndex: 0, lineIndex: 0, showCn: false, playing: false, audio: null };
+var storyHistoryActive = false;
 var currentAudio = null;
 
 bindEvents();
@@ -119,10 +120,11 @@ function bindEvents() {
   els.closeStoryButton.addEventListener("click", closeStoryPractice);
   els.storyPlayButton.addEventListener("click", toggleStoryPlay);
   els.storyReplayButton.addEventListener("click", replayStoryLine);
+  els.storySlowButton.addEventListener("click", playStoryLineSlow);
   els.storyPrevButton.addEventListener("click", previousStoryLine);
   els.storyNextButton.addEventListener("click", nextStoryLine);
   els.storyShowCnButton.addEventListener("click", toggleStoryChinese);
-  els.storySpeedSelect.addEventListener("change", updateStorySpeed);
+  window.addEventListener("popstate", handleBrowserBack);
 }
 
 function loadState() {
@@ -351,13 +353,38 @@ function openStoryPractice() {
   if (!window.LISTENING_STORIES || !window.LISTENING_STORIES.length) return;
   pauseCurrentAudio();
   storyState = { active: true, storyIndex: 0, lineIndex: 0, showCn: false, playing: false, audio: null };
+  pushStoryHistory();
+  render();
+  playStoryLine(true, 1);
+}
+
+function closeStoryPractice(fromHistory) {
+  if (!fromHistory && storyHistoryActive && window.history && window.history.back) {
+    window.history.back();
+    return;
+  }
+  closeStoryPanel();
+}
+
+function closeStoryPanel() {
+  pauseStoryAudio();
+  storyState.active = false;
+  storyHistoryActive = false;
   render();
 }
 
-function closeStoryPractice() {
-  pauseStoryAudio();
-  storyState.active = false;
-  render();
+function pushStoryHistory() {
+  if (storyHistoryActive || !window.history || !window.history.pushState) return;
+  try {
+    window.history.pushState({ myanmarWordsPanel: "story" }, "", window.location.href);
+    storyHistoryActive = true;
+  } catch (error) {
+    storyHistoryActive = false;
+  }
+}
+
+function handleBrowserBack() {
+  if (storyState.active) closeStoryPractice(true);
 }
 
 function getTestPool() {
@@ -459,10 +486,10 @@ function renderStory() {
   els.storyCnText.textContent = line.cn;
   toggleHidden(els.storyCnText, !storyState.showCn);
   els.storyShowCnButton.textContent = storyState.showCn ? "隐藏中文" : "显示中文";
-  els.storyPlayButton.textContent = storyState.playing ? "暂停" : "播放";
+  els.storyPlayButton.textContent = storyState.playing ? "暂停" : "继续";
   els.storyPrevButton.disabled = storyState.lineIndex <= 0;
   els.storyNextButton.disabled = storyState.lineIndex >= story.lines.length - 1;
-  els.storyStatus.textContent = storyState.playing ? "正在朗读" : "逐句听，听不懂就重听";
+  if (!storyState.playing && !els.storyStatus.textContent) els.storyStatus.textContent = "逐句听，听不懂就重听";
 }
 
 function renderStoryList() {
@@ -485,6 +512,7 @@ function appendStoryButton(story, storyIndex) {
     storyState.lineIndex = 0;
     storyState.showCn = false;
     renderStory();
+    playStoryLine(true, 1);
   });
   els.storyList.appendChild(button);
 }
@@ -519,10 +547,14 @@ function toggleStoryPlay() {
 }
 
 function replayStoryLine() {
-  playStoryLine(true);
+  playStoryLine(true, 1);
 }
 
-function playStoryLine(restart) {
+function playStoryLineSlow() {
+  playStoryLine(true, 0.75);
+}
+
+function playStoryLine(restart, rate) {
   var line = getCurrentStoryLine();
   if (!line) return;
   if (restart) pauseStoryAudio();
@@ -531,15 +563,16 @@ function playStoryLine(restart) {
     setStoryStatus("在线缅语发音失败，请检查网络或浏览器声音权限");
     renderStory();
   }, {
-    rate: getStoryRate(),
+    rate: rate || 1,
     onPlaying: function () {
       storyState.playing = true;
-      setStoryStatus("正在朗读");
+      setStoryStatus((rate || 1) < 1 ? "慢速朗读" : "正在朗读");
       renderStory();
     },
     onEnded: function () {
       storyState.playing = false;
       storyState.audio = null;
+      setStoryStatus("逐句听，听不懂就重听");
       renderStory();
     }
   });
@@ -551,6 +584,7 @@ function previousStoryLine() {
   storyState.lineIndex -= 1;
   storyState.showCn = false;
   renderStory();
+  playStoryLine(true, 1);
 }
 
 function nextStoryLine() {
@@ -560,6 +594,7 @@ function nextStoryLine() {
   storyState.lineIndex += 1;
   storyState.showCn = false;
   renderStory();
+  playStoryLine(true, 1);
 }
 
 function toggleStoryChinese() {
@@ -567,20 +602,14 @@ function toggleStoryChinese() {
   renderStory();
 }
 
-function updateStorySpeed() {
-  if (storyState.audio) storyState.audio.playbackRate = getStoryRate();
-}
-
-function getStoryRate() {
-  return Number(els.storySpeedSelect.value || 1);
-}
-
 function pauseStoryAudio() {
   if (storyState.audio) {
     storyState.audio.pause();
+    if (currentAudio === storyState.audio) currentAudio = null;
     storyState.audio = null;
   }
   storyState.playing = false;
+  setStoryStatus("逐句听，听不懂就重听");
 }
 
 function setStoryStatus(text) {
