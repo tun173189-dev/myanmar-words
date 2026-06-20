@@ -1,4 +1,4 @@
-const CACHE_NAME = "daily-myanmar-words-v34";
+const CACHE_NAME = "daily-myanmar-words-v35";
 const ASSETS = [
   "./",
   "./index.html",
@@ -10,8 +10,7 @@ const ASSETS = [
   "./app.js",
   "./manifest.webmanifest",
   "./icon.svg",
-  "./icon-512.png",
-  "./cloudflare-tts-worker.js"
+  "./icon-512.png"
 ];
 
 self.addEventListener("install", (event) => {
