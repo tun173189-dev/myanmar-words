@@ -414,6 +414,8 @@ function renderMode() {
   toggleHidden(els.testPanel, !test.active);
   toggleHidden(els.storyPanel, !storyState.active);
   toggleHidden(els.bottomNav, !bottomVisible);
+  var shell = document.querySelector(".app-shell");
+  if (shell) shell.classList.toggle("fullscreen-mode", !bottomVisible);
   renderNav();
 }
 
@@ -460,6 +462,7 @@ function renderCard() {
     if (els.reviewAgainButton) {
       els.reviewAgainButton.textContent = wrongIds.length ? "复习错词 " + wrongIds.length : "今天没有错词";
       els.reviewAgainButton.disabled = !wrongIds.length;
+      els.reviewAgainButton.classList.toggle("quiet-status", !wrongIds.length);
     }
     return;
   }
@@ -471,6 +474,7 @@ function renderCard() {
   }
   els.wordText.textContent = current.word;
   els.phoneticText.textContent = current.phonetic || "";
+  els.cardButton.classList.toggle("flipped", flipped);
   els.meaningText.textContent = current.meaning;
   els.exampleText.textContent = current.example;
   els.exampleCnText.textContent = current.exampleCn;
@@ -737,8 +741,8 @@ function renderTest() {
   }
   if (els.testTitleText) els.testTitleText.textContent = test.title || "小测";
   els.testProgressText.textContent = String(test.index + 1) + " / " + String(test.questions.length);
-  els.testWordText.textContent = test.listening && !test.showWord ? "听发音，选择意思" : question.word.word;
-  els.speakTestButton.textContent = test.listening ? "🔊 再听一遍" : "🔊 朗读单词";
+  els.testWordText.textContent = test.listening && !test.showWord ? "听发音，选择正确意思" : question.word.word;
+  els.speakTestButton.textContent = test.listening ? "再听一遍" : "朗读单词";
   toggleHidden(els.showTestWordButton, !test.listening || test.showWord);
   if (!test.answered) els.testFeedback.textContent = "";
   els.choiceList.innerHTML = "";
@@ -824,7 +828,7 @@ function toggleStoryPlay() {
     renderStory();
     return;
   }
-  if (storyState.playState === "idle" || storyState.playState === "failed") {
+  if (storyState.playState === "idle" || storyState.playState === "failed" || storyState.playState === "ended") {
     playStoryLine(true, 1);
   }
 }
@@ -915,8 +919,7 @@ function renderStoryPlayButton() {
   } else if (state === "paused" || state === "failed") {
     els.storyPlayButton.textContent = "继续";
   } else if (state === "ended") {
-    els.storyPlayButton.textContent = "已播放";
-    els.storyPlayButton.disabled = true;
+    els.storyPlayButton.textContent = "播放";
   } else {
     els.storyPlayButton.textContent = "播放";
   }
