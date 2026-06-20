@@ -359,13 +359,23 @@ button:disabled {
 
 .test-speak {
   justify-self: center;
-  min-height: 40px;
+  min-height: 42px;
   padding: 0 16px;
   border-radius: 999px;
   background: #e5efe9;
   color: #285b4e;
   font-size: 14px;
   font-weight: 750;
+}
+
+.test-audio-button {
+  width: min(100%, 240px);
+  min-height: 52px;
+  border-radius: 8px;
+  background: #dceee6;
+  color: #205345;
+  font-size: 17px;
+  box-shadow: 0 10px 24px rgba(47, 111, 94, 0.12);
 }
 
 .choice-list {

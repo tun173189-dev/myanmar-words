@@ -91,7 +91,7 @@ var lastAutoSpokenKey = "";
 var learningAutoSpeakArmed = false;
 var settingsOpen = false;
 var test = { active: false, listening: false, showWord: true, title: "小测", questions: [], index: 0, score: 0, answered: false };
-var storyState = { active: false, storyIndex: 0, lineIndex: 0, showCn: false, playing: false, audio: null };
+var storyState = { active: false, storyIndex: 0, lineIndex: 0, showCn: false, playing: false, audio: null, playState: "idle" };
 var panelHistoryActive = false;
 var activePanel = "";
 var currentAudio = null;
@@ -259,7 +259,7 @@ function renderMode() {
   toggleHidden(document.querySelector(".stats"), panelOpen);
   toggleHidden(els.weeklyReviewPanel, panelOpen || reviewMode || (!isWeeklyReviewDue() && !isTestDue()));
   toggleHidden(els.donePanel, panelOpen || reviewMode || !dailyDone);
-  toggleHidden(document.querySelector(".test-actions"), panelOpen);
+  toggleHidden(document.querySelector(".test-actions"), panelOpen || reviewMode);
   toggleHidden(document.querySelector(".card-area"), panelOpen || (dailyDone && !reviewMode));
   toggleHidden(document.querySelector(".actions"), panelOpen || (dailyDone && !reviewMode));
   toggleHidden(els.audioStatus, panelOpen || (dailyDone && !reviewMode));
@@ -399,7 +399,7 @@ function openStoryPractice() {
   pauseCurrentAudio();
   closeTestPanel();
   closeSettingsPanel();
-  storyState = { active: true, storyIndex: 0, lineIndex: 0, showCn: false, playing: false, audio: null };
+  storyState = { active: true, storyIndex: 0, lineIndex: 0, showCn: false, playing: false, audio: null, playState: "idle" };
   pushPanelHistory("story");
   render();
   playStoryLine(true, 1);
@@ -563,6 +563,7 @@ function renderTest() {
   if (els.testTitleText) els.testTitleText.textContent = test.title || "小测";
   els.testProgressText.textContent = String(test.index + 1) + " / " + String(test.questions.length);
   els.testWordText.textContent = test.listening && !test.showWord ? "听发音，选择意思" : question.word.word;
+  els.speakTestButton.textContent = test.listening ? "🔊 再听一遍" : "🔊 朗读单词";
   toggleHidden(els.showTestWordButton, !test.listening || test.showWord);
   if (!test.answered) els.testFeedback.textContent = "";
   els.choiceList.innerHTML = "";
@@ -586,7 +587,7 @@ function renderStory() {
   els.storyCnText.textContent = line.cn;
   toggleHidden(els.storyCnText, !storyState.showCn);
   els.storyShowCnButton.textContent = storyState.showCn ? "隐藏中文" : "显示中文";
-  els.storyPlayButton.textContent = storyState.playing ? "暂停" : "继续";
+  renderStoryPlayButton();
   els.storyPrevButton.disabled = storyState.lineIndex <= 0;
   els.storyNextButton.disabled = storyState.lineIndex >= story.lines.length - 1;
   if (!storyState.playing && !els.storyStatus.textContent) els.storyStatus.textContent = "逐句听，听不懂就重听";
@@ -611,6 +612,7 @@ function appendStoryButton(story, storyIndex) {
     storyState.storyIndex = storyIndex;
     storyState.lineIndex = 0;
     storyState.showCn = false;
+    storyState.playState = "idle";
     renderStory();
     playStoryLine(true, 1);
   });
@@ -632,18 +634,24 @@ function toggleStoryPlay() {
   if (storyState.audio && storyState.playing) {
     storyState.audio.pause();
     storyState.playing = false;
+    storyState.playState = "paused";
     renderStory();
     return;
   }
-  if (storyState.audio && !storyState.playing) {
+  if (storyState.audio && !storyState.playing && storyState.playState === "paused") {
     storyState.audio.play().catch(function () {
       setStoryStatus("播放失败，请检查网络或声音权限");
+      storyState.playState = "failed";
+      renderStory();
     });
     storyState.playing = true;
+    storyState.playState = "playing";
     renderStory();
     return;
   }
-  playStoryLine(false);
+  if (storyState.playState === "idle" || storyState.playState === "failed") {
+    playStoryLine(true, 1);
+  }
 }
 
 function replayStoryLine() {
@@ -658,9 +666,11 @@ function playStoryLine(restart, rate) {
   var line = getCurrentStoryLine();
   if (!line) return;
   if (restart) pauseStoryAudio();
+  storyState.playState = "loading";
   setStoryStatus("正在准备发音");
   storyState.audio = playOnlineMyanmarAudio(line.my, function () {
     storyState.playing = false;
+    storyState.playState = "failed";
     setStoryStatus("自动播放失败，请点继续");
     renderStory();
   }, {
@@ -668,12 +678,14 @@ function playStoryLine(restart, rate) {
     timeoutMs: 9000,
     onPlaying: function () {
       storyState.playing = true;
+      storyState.playState = "playing";
       setStoryStatus((rate || 1) < 1 ? "慢速朗读" : "正在朗读");
       renderStory();
     },
     onEnded: function () {
       storyState.playing = false;
       storyState.audio = null;
+      storyState.playState = "ended";
       setStoryStatus("逐句听，听不懂就重听");
       renderStory();
     }
@@ -685,6 +697,7 @@ function previousStoryLine() {
   pauseStoryAudio();
   storyState.lineIndex -= 1;
   storyState.showCn = false;
+  storyState.playState = "idle";
   renderStory();
   playStoryLine(true, 1);
 }
@@ -695,6 +708,7 @@ function nextStoryLine() {
   pauseStoryAudio();
   storyState.lineIndex += 1;
   storyState.showCn = false;
+  storyState.playState = "idle";
   renderStory();
   playStoryLine(true, 1);
 }
@@ -711,7 +725,26 @@ function pauseStoryAudio() {
     storyState.audio = null;
   }
   storyState.playing = false;
+  storyState.playState = "idle";
   setStoryStatus("逐句听，听不懂就重听");
+}
+
+function renderStoryPlayButton() {
+  var state = storyState.playState || "idle";
+  els.storyPlayButton.disabled = false;
+  if (state === "loading") {
+    els.storyPlayButton.textContent = "准备中";
+    els.storyPlayButton.disabled = true;
+  } else if (state === "playing") {
+    els.storyPlayButton.textContent = "暂停";
+  } else if (state === "paused" || state === "failed") {
+    els.storyPlayButton.textContent = "继续";
+  } else if (state === "ended") {
+    els.storyPlayButton.textContent = "已播放";
+    els.storyPlayButton.disabled = true;
+  } else {
+    els.storyPlayButton.textContent = "播放";
+  }
 }
 
 function setStoryStatus(text) {
