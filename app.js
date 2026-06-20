@@ -1,8 +1,17 @@
 var TEST_COUNT = 10;
 var STORAGE_KEY = "daily-myanmar-words-state-v11";
 var TTS_PROXY_URL = "https://myanmar-tts.tun173189.workers.dev/tts";
+var DEFAULT_SETTINGS = {
+  dailyCount: 10,
+  testInterval: 7,
+  autoSpeak: true,
+  category: "all",
+  learningLanguage: "zh",
+  notifications: false
+};
 
 var els = {
+  homeTopbar: document.querySelector("#homeTopbar"),
   todayTitle: document.querySelector("#todayTitle"),
   progressText: document.querySelector("#progressText"),
   progressLabel: document.querySelector("#progressLabel"),
@@ -33,12 +42,17 @@ var els = {
   resetDayButton: document.querySelector("#resetDayButton"),
   settingsButton: document.querySelector("#settingsButton"),
   settingsPanel: document.querySelector("#settingsPanel"),
+  closeSettingsButton: document.querySelector("#closeSettingsButton"),
   dailyCountSelect: document.querySelector("#dailyCountSelect"),
   testIntervalSelect: document.querySelector("#testIntervalSelect"),
+  categorySelect: document.querySelector("#categorySelect"),
+  learningLanguageSelect: document.querySelector("#learningLanguageSelect"),
   autoSpeakToggle: document.querySelector("#autoSpeakToggle"),
+  notificationToggle: document.querySelector("#notificationToggle"),
   startTestButton: document.querySelector("#startTestButton"),
   startListeningTestButton: document.querySelector("#startListeningTestButton"),
   startStoryButton: document.querySelector("#startStoryButton"),
+  weeklyTestDueButton: document.querySelector("#weeklyTestDueButton"),
   testPanel: document.querySelector("#testPanel"),
   testTitleText: document.querySelector("#testTitleText"),
   testProgressText: document.querySelector("#testProgressText"),
@@ -76,6 +90,7 @@ var reviewMode = !!reviewSession;
 var session = reviewMode ? mapIdsToWords(reviewSession.ids) : buildSession();
 var index = reviewMode ? firstReviewUnansweredIndex() : firstUnansweredIndex();
 var lastAutoSpokenKey = "";
+var learningAutoSpeakArmed = false;
 var settingsOpen = false;
 var test = { active: false, listening: false, showWord: true, title: "小测", questions: [], index: 0, score: 0, answered: false };
 var storyState = { active: false, storyIndex: 0, lineIndex: 0, showCn: false, playing: false, audio: null };
@@ -109,12 +124,17 @@ function bindEvents() {
   els.weakReviewButton.addEventListener("click", reviewWeakWords);
   els.resetDayButton.addEventListener("click", resetToday);
   els.settingsButton.addEventListener("click", toggleSettings);
+  els.closeSettingsButton.addEventListener("click", closeSettings);
   els.dailyCountSelect.addEventListener("change", updateSettings);
   els.testIntervalSelect.addEventListener("change", updateSettings);
+  els.categorySelect.addEventListener("change", updateSettings);
+  els.learningLanguageSelect.addEventListener("change", updateSettings);
   els.autoSpeakToggle.addEventListener("change", updateSettings);
+  els.notificationToggle.addEventListener("change", updateSettings);
   els.startTestButton.addEventListener("click", startTest);
   els.startListeningTestButton.addEventListener("click", startListeningTest);
   els.startStoryButton.addEventListener("click", openStoryPractice);
+  els.weeklyTestDueButton.addEventListener("click", startTest);
   els.closeTestButton.addEventListener("click", closeTest);
   els.speakTestButton.addEventListener("click", speakCurrentTestWord);
   els.showTestWordButton.addEventListener("click", showListeningWord);
@@ -133,7 +153,7 @@ function loadState() {
     records: {},
     days: {},
     tests: [],
-    settings: { dailyCount: 10, testInterval: 7, autoSpeak: true },
+    settings: Object.assign({}, DEFAULT_SETTINGS),
     lastStudyDate: "",
     streak: 0,
     weeklyReviewThrough: "",
@@ -153,9 +173,12 @@ function loadState() {
   saved.days = saved.days || {};
   saved.tests = saved.tests || [];
   saved.settings = saved.settings || {};
-  saved.settings.dailyCount = Number(saved.settings.dailyCount || fallback.settings.dailyCount);
-  saved.settings.testInterval = Number(saved.settings.testInterval || fallback.settings.testInterval);
+  saved.settings.dailyCount = Number(saved.settings.dailyCount || DEFAULT_SETTINGS.dailyCount);
+  saved.settings.testInterval = Number(saved.settings.testInterval || DEFAULT_SETTINGS.testInterval);
   saved.settings.autoSpeak = saved.settings.autoSpeak !== false;
+  saved.settings.category = saved.settings.category || DEFAULT_SETTINGS.category;
+  saved.settings.learningLanguage = saved.settings.learningLanguage || DEFAULT_SETTINGS.learningLanguage;
+  saved.settings.notifications = saved.settings.notifications === true;
   saved.lastStudyDate = saved.lastStudyDate || "";
   saved.streak = saved.streak || 0;
   saved.weeklyReviewThrough = saved.weeklyReviewThrough || "";
@@ -183,8 +206,9 @@ function buildSession() {
   var due = [];
   var fresh = [];
   var learned = [];
-  for (var i = 0; i < WORDS.length; i += 1) {
-    var word = WORDS[i];
+  var wordPool = getSelectedWords();
+  for (var i = 0; i < wordPool.length; i += 1) {
+    var word = wordPool[i];
     var record = state.records[word.id];
     if (record && record.reviewAfter && record.reviewAfter <= today) due.push(word);
     else if (!record) fresh.push(word);
@@ -233,24 +257,29 @@ function render() {
 }
 
 function renderMode() {
-  var testing = test.active || storyState.active;
+  var panelOpen = test.active || storyState.active || settingsOpen;
   var day = state.days[today];
   var dailyDone = !!(day && day.completed);
-  toggleHidden(document.querySelector(".stats"), testing);
-  toggleHidden(els.weeklyReviewPanel, testing || reviewMode || !isWeeklyReviewDue());
-  toggleHidden(els.donePanel, testing || reviewMode || !dailyDone);
-  toggleHidden(document.querySelector(".test-actions"), testing);
-  toggleHidden(document.querySelector(".card-area"), testing || (dailyDone && !reviewMode));
-  toggleHidden(document.querySelector(".actions"), testing || (dailyDone && !reviewMode));
+  toggleHidden(els.homeTopbar, panelOpen);
+  toggleHidden(document.querySelector(".stats"), panelOpen);
+  toggleHidden(els.weeklyReviewPanel, panelOpen || reviewMode || (!isWeeklyReviewDue() && !isTestDue()));
+  toggleHidden(els.donePanel, panelOpen || reviewMode || !dailyDone);
+  toggleHidden(document.querySelector(".test-actions"), panelOpen);
+  toggleHidden(document.querySelector(".card-area"), panelOpen || (dailyDone && !reviewMode));
+  toggleHidden(document.querySelector(".actions"), panelOpen || (dailyDone && !reviewMode));
+  toggleHidden(els.audioStatus, panelOpen || (dailyDone && !reviewMode));
+  toggleHidden(els.settingsPanel, !settingsOpen);
   toggleHidden(els.testPanel, !test.active);
   toggleHidden(els.storyPanel, !storyState.active);
 }
 
 function renderSettings() {
-  toggleHidden(els.settingsPanel, !settingsOpen || test.active || storyState.active);
   els.dailyCountSelect.value = String(state.settings.dailyCount);
   els.testIntervalSelect.value = String(state.settings.testInterval);
+  els.categorySelect.value = state.settings.category || DEFAULT_SETTINGS.category;
+  els.learningLanguageSelect.value = state.settings.learningLanguage || DEFAULT_SETTINGS.learningLanguage;
   els.autoSpeakToggle.checked = state.settings.autoSpeak;
+  els.notificationToggle.checked = state.settings.notifications === true;
 }
 
 function renderCard() {
@@ -287,12 +316,13 @@ function renderCard() {
   toggleHidden(els.exampleText, !flipped);
   toggleHidden(els.exampleCnText, !flipped);
   toggleHidden(els.exampleTools, !flipped);
-  autoSpeak("learn-" + current.id + "-" + index, current.word);
+  if (learningAutoSpeakArmed || reviewMode) autoSpeak("learn-" + current.id + "-" + index, current.word);
 }
 
 function answer(isKnown) {
   var current = session[index];
   if (!current) return;
+  learningAutoSpeakArmed = true;
   updateRecord(current, isKnown);
   if (reviewMode && reviewSession) {
     reviewSession.answers[current.id] = isKnown;
@@ -324,14 +354,17 @@ function updateRecord(word, isKnown) {
 }
 
 function startTest() {
+  closeSettingsPanel();
   startChoiceTest(getTestPool(), false, "本周小测");
 }
 
 function startListeningTest() {
+  closeSettingsPanel();
   startChoiceTest(getTestPool(), true, "听力小测");
 }
 
 function startTodayListeningReview() {
+  closeSettingsPanel();
   startChoiceTest(mapIdsToWords(getTodayIds()), true, "今天再听");
 }
 
@@ -420,6 +453,10 @@ function handleBrowserBack() {
   }
   if (settingsOpen) {
     closeSettings(true);
+    return;
+  }
+  if (reviewMode) {
+    cancelReview();
   }
 }
 
@@ -429,8 +466,9 @@ function getTestPool() {
   var preferredIds = source.ids.length ? source.ids : reviewedToday;
   var studied = preferredIds.length ? mapIdsToWords(preferredIds) : [];
   if (!studied.length) {
-    for (var i = 0; i < WORDS.length; i += 1) {
-      if (state.records[WORDS[i].id]) studied.push(WORDS[i]);
+    var wordPool = getSelectedWords();
+    for (var i = 0; i < wordPool.length; i += 1) {
+      if (state.records[wordPool[i].id]) studied.push(wordPool[i]);
     }
   }
   var candidates = studied.length >= TEST_COUNT ? studied : session.slice();
@@ -461,6 +499,7 @@ function toggleSettings() {
     return;
   }
   settingsOpen = true;
+  pauseCurrentAudio();
   pushPanelHistory("settings");
   render();
 }
@@ -481,16 +520,21 @@ function closeSettingsPanel() {
 
 function updateSettings() {
   var oldDailyCount = state.settings.dailyCount;
+  var oldCategory = state.settings.category || DEFAULT_SETTINGS.category;
   state.settings.dailyCount = Number(els.dailyCountSelect.value);
   state.settings.testInterval = Number(els.testIntervalSelect.value);
+  state.settings.category = els.categorySelect.value || DEFAULT_SETTINGS.category;
+  state.settings.learningLanguage = els.learningLanguageSelect.value || DEFAULT_SETTINGS.learningLanguage;
   state.settings.autoSpeak = els.autoSpeakToggle.checked;
+  state.settings.notifications = els.notificationToggle.checked;
 
   var answers = state.days[today] && state.days[today].answers ? state.days[today].answers : {};
-  if (oldDailyCount !== state.settings.dailyCount && Object.keys(answers).length === 0) {
+  if ((oldDailyCount !== state.settings.dailyCount || oldCategory !== state.settings.category) && Object.keys(answers).length === 0) {
     delete state.days[today];
     session = buildSession();
     index = 0;
     flipped = false;
+    learningAutoSpeakArmed = false;
   }
   saveState();
   render();
@@ -498,7 +542,8 @@ function updateSettings() {
 
 function makeQuestion(word) {
   var wrongChoices = [];
-  var pool = WORDS.slice();
+  var pool = getSelectedWords();
+  if (pool.length < 4) pool = WORDS.slice();
   pool.sort(function () { return Math.random() - 0.5; });
   for (var i = 0; i < pool.length && wrongChoices.length < 3; i += 1) {
     if (pool[i].id !== word.id) wrongChoices.push(pool[i]);
@@ -761,6 +806,7 @@ function formatToday() {
 function speakCurrentWord() {
   var current = session[index];
   if (!current) return;
+  learningAutoSpeakArmed = true;
   speakText(current.word);
 }
 
@@ -883,7 +929,10 @@ function startReview(ids, type, options) {
   var unique = uniqueIds(ids);
   session = mapIdsToWords(unique);
   if (!session.length) return;
+  closeSettingsPanel();
+  pauseCurrentAudio();
   reviewMode = true;
+  learningAutoSpeakArmed = true;
   reviewSession = {
     type: type || "review",
     ids: getIds(session),
@@ -895,6 +944,7 @@ function startReview(ids, type, options) {
   index = 0;
   flipped = false;
   saveState();
+  pushPanelHistory("review");
   render();
 }
 
@@ -911,7 +961,23 @@ function finishReview() {
   session = buildSession();
   index = firstUnansweredIndex();
   flipped = false;
+  learningAutoSpeakArmed = false;
+  clearPanelHistory("review");
   saveState();
+}
+
+function cancelReview() {
+  pauseCurrentAudio();
+  state.activeReview = null;
+  reviewSession = null;
+  reviewMode = false;
+  session = buildSession();
+  index = firstUnansweredIndex();
+  flipped = false;
+  learningAutoSpeakArmed = false;
+  clearPanelHistory("review");
+  saveState();
+  render();
 }
 
 function resetToday() {
@@ -925,6 +991,7 @@ function resetToday() {
   session = buildSession();
   index = 0;
   flipped = false;
+  learningAutoSpeakArmed = false;
   reviewMode = false;
   render();
 }
@@ -958,14 +1025,23 @@ function getTodayIds() {
 
 function renderWeeklyPanel() {
   var source = getWeeklyReviewSource();
+  var reviewDue = isWeeklyReviewDue();
+  var testDue = isTestDue();
   var weakCount = getWeakWordIds().length;
-  if (els.weeklyReviewTitle) els.weeklyReviewTitle.textContent = "本周该复习了";
+  if (els.weeklyReviewTitle) els.weeklyReviewTitle.textContent = reviewDue ? "本周该复习了" : "本周小测已准备好";
   if (els.weeklyReviewSummary) {
-    els.weeklyReviewSummary.textContent = "这段时间学了 " + source.ids.length + " 个词，先完整复习一遍，再做小测。";
+    els.weeklyReviewSummary.textContent = reviewDue
+      ? "这段时间学了 " + source.ids.length + " 个词，先完整复习一遍，再做小测。"
+      : "已经完成一轮学习，做一次小测看看掌握得怎么样。";
   }
+  toggleHidden(els.weeklyReviewButton, !reviewDue);
   if (els.weakReviewButton) {
     els.weakReviewButton.textContent = weakCount ? "复习没掌握的词 " + weakCount : "暂无没掌握的词";
     els.weakReviewButton.disabled = !weakCount;
+    toggleHidden(els.weakReviewButton, !reviewDue);
+  }
+  if (els.weeklyTestDueButton) {
+    toggleHidden(els.weeklyTestDueButton, !testDue);
   }
 }
 
@@ -996,11 +1072,26 @@ function getCompletedDayKeysAfter(dateKey) {
 
 function getWeakWordIds() {
   var ids = [];
-  for (var i = 0; i < WORDS.length; i += 1) {
-    var record = state.records[WORDS[i].id];
-    if (record && ((record.level || 0) === 0 || (record.reviewAfter && record.reviewAfter <= today))) ids.push(WORDS[i].id);
+  var wordPool = getSelectedWords();
+  for (var i = 0; i < wordPool.length; i += 1) {
+    var record = state.records[wordPool[i].id];
+    if (record && ((record.level || 0) === 0 || (record.reviewAfter && record.reviewAfter <= today))) ids.push(wordPool[i].id);
   }
   return prioritizeReviewIds(ids);
+}
+
+function getSelectedWords() {
+  var selected = state.settings.category || DEFAULT_SETTINGS.category;
+  if (selected === "all") return WORDS.slice();
+  var filtered = [];
+  for (var i = 0; i < WORDS.length; i += 1) {
+    if (getWordCategory(WORDS[i]) === selected) filtered.push(WORDS[i]);
+  }
+  return filtered.length ? filtered : WORDS.slice();
+}
+
+function getWordCategory(word) {
+  return word.category || "基础日常";
 }
 
 function prioritizeReviewIds(ids) {
