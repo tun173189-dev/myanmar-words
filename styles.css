@@ -112,6 +112,22 @@ h1 {
   font-size: 12px;
 }
 
+.learning-overview {
+  display: grid;
+  gap: 6px;
+  padding: 10px 12px;
+  border: 1px solid rgba(77, 66, 52, 0.08);
+  border-radius: 8px;
+  background: rgba(255, 250, 241, 0.58);
+  color: #5e554b;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.learning-overview p {
+  margin: 0;
+}
+
 .test-actions {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -205,6 +221,15 @@ input[type="checkbox"] {
   justify-content: center;
   gap: 10px;
   text-align: center;
+}
+
+.word-type-badge {
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: #e5efe9;
+  color: #285b4e;
+  font-size: 12px;
+  font-weight: 800;
 }
 
 .card-hint {

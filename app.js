@@ -16,8 +16,12 @@ var els = {
   progressText: document.querySelector("#progressText"),
   progressLabel: document.querySelector("#progressLabel"),
   streakText: document.querySelector("#streakText"),
+  learningOverview: document.querySelector("#learningOverview"),
+  learnedTotalText: document.querySelector("#learnedTotalText"),
+  todayMixText: document.querySelector("#todayMixText"),
   cardButton: document.querySelector("#cardButton"),
   cardHint: document.querySelector("#cardHint"),
+  wordTypeBadge: document.querySelector("#wordTypeBadge"),
   wordText: document.querySelector("#wordText"),
   phoneticText: document.querySelector("#phoneticText"),
   meaningText: document.querySelector("#meaningText"),
@@ -196,6 +200,12 @@ function saveState() {
 function buildSession() {
   var existing = state.days[today];
   if (existing && existing.ids && existing.ids.length) {
+    var answers = existing.answers || {};
+    if (!existing.sources && !Object.keys(answers).length) {
+      delete state.days[today];
+      saveState();
+      return buildSession();
+    }
     return mapIdsToWords(existing.ids);
   }
 
@@ -211,17 +221,41 @@ function buildSession() {
     else learned.push(word);
   }
 
-  var all = due.concat(fresh).concat(learned);
-  var picked = all.slice(0, state.settings.dailyCount);
-  state.days[today] = { ids: getIds(picked), answers: {}, completed: false };
+  var candidates = toTypedWords(due, "review").concat(toTypedWords(fresh, "new")).concat(toTypedWords(learned, "review"));
+  var picked = candidates.slice(0, state.settings.dailyCount);
+  state.days[today] = { ids: getTypedIds(picked), sources: getTypedSources(picked), answers: {}, completed: false };
   saveState();
-  return picked;
+  return mapTypedWords(picked);
 }
 
 function getIds(words) {
   var ids = [];
   for (var i = 0; i < words.length; i += 1) ids.push(words[i].id);
   return ids;
+}
+
+function toTypedWords(words, type) {
+  var typed = [];
+  for (var i = 0; i < words.length; i += 1) typed.push({ word: words[i], type: type });
+  return typed;
+}
+
+function mapTypedWords(typed) {
+  var words = [];
+  for (var i = 0; i < typed.length; i += 1) words.push(typed[i].word);
+  return words;
+}
+
+function getTypedIds(typed) {
+  var ids = [];
+  for (var i = 0; i < typed.length; i += 1) ids.push(typed[i].word.id);
+  return ids;
+}
+
+function getTypedSources(typed) {
+  var sources = {};
+  for (var i = 0; i < typed.length; i += 1) sources[typed[i].word.id] = typed[i].type;
+  return sources;
 }
 
 function mapIdsToWords(ids) {
@@ -244,6 +278,7 @@ function render() {
   els.todayTitle.textContent = formatToday();
   els.streakText.textContent = String(state.streak || 0) + " 天";
   renderSettings();
+  renderLearningOverview();
   renderWeeklyPanel();
   renderMode();
   renderCard();
@@ -257,6 +292,7 @@ function renderMode() {
   var dailyDone = !!(day && day.completed);
   toggleHidden(els.homeTopbar, panelOpen);
   toggleHidden(document.querySelector(".stats"), panelOpen);
+  toggleHidden(els.learningOverview, panelOpen || reviewMode);
   toggleHidden(els.weeklyReviewPanel, panelOpen || reviewMode || (!isWeeklyReviewDue() && !isTestDue()));
   toggleHidden(els.donePanel, panelOpen || reviewMode || !dailyDone);
   toggleHidden(document.querySelector(".test-actions"), panelOpen || reviewMode);
@@ -291,11 +327,11 @@ function renderCard() {
   if (!current || (day && day.completed && !reviewMode)) {
     toggleHidden(els.cardButton, true);
     toggleHidden(document.querySelector(".actions"), true);
-    var dayAnswers = day && day.answers ? day.answers : {};
-    var answerValues = objectValues(dayAnswers);
-    var known = countKnown(answerValues);
-    var wrongIds = getTodayWrongIds();
-    els.summaryText.textContent = "认识 " + known + " 个，不认识 " + (answerValues.length - known) + " 个。";
+    var progress = getTodayProgressStats();
+    var wrongIds = progress.needsReviewIds;
+    els.summaryText.textContent = progress.needsReview
+      ? "今日掌握 " + progress.mastered + " 个，还有 " + progress.needsReview + " 个需要复习。"
+      : "今日掌握 " + progress.mastered + " 个，今天没有需要复习的词。";
     if (els.reviewAgainButton) {
       els.reviewAgainButton.textContent = wrongIds.length ? "复习错词 " + wrongIds.length : "今天没有错词";
       els.reviewAgainButton.disabled = !wrongIds.length;
@@ -305,6 +341,9 @@ function renderCard() {
 
   toggleHidden(els.cardButton, false);
   toggleHidden(document.querySelector(".actions"), false);
+  if (els.wordTypeBadge) {
+    els.wordTypeBadge.textContent = getWordTypeLabel(current);
+  }
   els.wordText.textContent = current.word;
   els.phoneticText.textContent = current.phonetic || "";
   els.meaningText.textContent = current.meaning;
@@ -747,6 +786,54 @@ function renderStoryPlayButton() {
   }
 }
 
+function renderLearningOverview() {
+  if (!els.learnedTotalText || !els.todayMixText) return;
+  var category = state.settings.category || DEFAULT_SETTINGS.category;
+  var pool = getSelectedWords();
+  var learned = countLearnedWords(pool);
+  els.learnedTotalText.textContent = category === "all"
+    ? "总进度 " + learned + " / " + WORDS.length
+    : "场景进度 " + learned + " / " + pool.length;
+
+  var mix = getTodayMixStats();
+  els.todayMixText.textContent = mix.hasSources
+    ? "今日：新词 " + mix.newCount + "，复习 " + mix.reviewCount
+    : "今日词汇 " + mix.total + " 个";
+}
+
+function countLearnedWords(words) {
+  var count = 0;
+  for (var i = 0; i < words.length; i += 1) {
+    if (state.records[words[i].id]) count += 1;
+  }
+  return count;
+}
+
+function getTodayMixStats() {
+  var day = state.days[today];
+  if (!day || !day.ids || !day.ids.length) return { newCount: 0, reviewCount: 0, total: 0, hasSources: false };
+  var sources = day.sources || {};
+  var hasSources = false;
+  var newCount = 0;
+  var reviewCount = 0;
+  for (var i = 0; i < day.ids.length; i += 1) {
+    var type = sources[day.ids[i]];
+    if (type) hasSources = true;
+    if (type === "new") newCount += 1;
+    else if (type === "review") reviewCount += 1;
+  }
+  return { newCount: newCount, reviewCount: reviewCount, total: day.ids.length, hasSources: hasSources };
+}
+
+function getWordTypeLabel(word) {
+  if (reviewMode) return getReviewLabel();
+  var day = state.days[today];
+  var source = day && day.sources ? day.sources[word.id] : "";
+  if (source === "new") return "新词";
+  if (source === "review") return "复习";
+  return "今日词汇";
+}
+
 function setStoryStatus(text) {
   if (els.storyStatus) els.storyStatus.textContent = text || "";
 }
@@ -937,7 +1024,7 @@ function forceAutoSpeak(key, text) {
 }
 
 function reviewMistakes() {
-  var wrongIds = getTodayWrongIds();
+  var wrongIds = getTodayNeedsReviewIds();
   if (!wrongIds.length) {
     renderCard();
     return;
@@ -946,6 +1033,47 @@ function reviewMistakes() {
 }
 
 function getTodayWrongIds() {
+  return getTodayNeedsReviewIds();
+}
+
+function getTodayNeedsReviewIds() {
+  var day = state.days[today];
+  if (!day || !day.ids) return [];
+  var answers = day.answers || {};
+  var needsReviewIds = [];
+  for (var i = 0; i < day.ids.length; i += 1) {
+    var id = Number(day.ids[i]);
+    if (!Object.prototype.hasOwnProperty.call(answers, id)) continue;
+    if (!isTodayWordMastered(id)) needsReviewIds.push(id);
+  }
+  return needsReviewIds;
+}
+
+function getTodayProgressStats() {
+  var day = state.days[today];
+  if (!day || !day.ids) return { mastered: 0, needsReview: 0, needsReviewIds: [] };
+  var answers = day.answers || {};
+  var mastered = 0;
+  var needsReviewIds = [];
+  for (var i = 0; i < day.ids.length; i += 1) {
+    var id = Number(day.ids[i]);
+    if (!Object.prototype.hasOwnProperty.call(answers, id)) continue;
+    if (isTodayWordMastered(id)) mastered += 1;
+    else needsReviewIds.push(id);
+  }
+  return { mastered: mastered, needsReview: needsReviewIds.length, needsReviewIds: needsReviewIds };
+}
+
+function isTodayWordMastered(id) {
+  var day = state.days[today];
+  var answers = day && day.answers ? day.answers : {};
+  var record = state.records[id];
+  if (record && record.lastSeen === today) return (record.level || 0) > 0;
+  if (record && (record.level || 0) > 0 && answers[id] !== false) return true;
+  return answers[id] === true;
+}
+
+function getFirstPassWrongIds() {
   var answers = state.days[today] && state.days[today].answers ? state.days[today].answers : {};
   var wrongIds = [];
   for (var id in answers) {
