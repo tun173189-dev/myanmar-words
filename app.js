@@ -39,7 +39,6 @@ var els = {
   weeklyReviewSummary: document.querySelector("#weeklyReviewSummary"),
   weeklyReviewButton: document.querySelector("#weeklyReviewButton"),
   weakReviewButton: document.querySelector("#weakReviewButton"),
-  resetDayButton: document.querySelector("#resetDayButton"),
   settingsButton: document.querySelector("#settingsButton"),
   settingsPanel: document.querySelector("#settingsPanel"),
   closeSettingsButton: document.querySelector("#closeSettingsButton"),
@@ -49,7 +48,6 @@ var els = {
   learningLanguageSelect: document.querySelector("#learningLanguageSelect"),
   autoSpeakToggle: document.querySelector("#autoSpeakToggle"),
   notificationToggle: document.querySelector("#notificationToggle"),
-  startTestButton: document.querySelector("#startTestButton"),
   startListeningTestButton: document.querySelector("#startListeningTestButton"),
   startStoryButton: document.querySelector("#startStoryButton"),
   weeklyTestDueButton: document.querySelector("#weeklyTestDueButton"),
@@ -122,7 +120,6 @@ function bindEvents() {
   els.listenTodayButton.addEventListener("click", startTodayListeningReview);
   els.weeklyReviewButton.addEventListener("click", startWeeklyReview);
   els.weakReviewButton.addEventListener("click", reviewWeakWords);
-  els.resetDayButton.addEventListener("click", resetToday);
   els.settingsButton.addEventListener("click", toggleSettings);
   els.closeSettingsButton.addEventListener("click", closeSettings);
   els.dailyCountSelect.addEventListener("change", updateSettings);
@@ -131,7 +128,6 @@ function bindEvents() {
   els.learningLanguageSelect.addEventListener("change", updateSettings);
   els.autoSpeakToggle.addEventListener("change", updateSettings);
   els.notificationToggle.addEventListener("change", updateSettings);
-  els.startTestButton.addEventListener("click", startTest);
   els.startListeningTestButton.addEventListener("click", startListeningTest);
   els.startStoryButton.addEventListener("click", openStoryPractice);
   els.weeklyTestDueButton.addEventListener("click", startTest);
@@ -247,7 +243,6 @@ function findWord(id) {
 function render() {
   els.todayTitle.textContent = formatToday();
   els.streakText.textContent = String(state.streak || 0) + " 天";
-  els.startTestButton.textContent = "本周小测";
   renderSettings();
   renderWeeklyPanel();
   renderMode();
@@ -299,7 +294,12 @@ function renderCard() {
     var dayAnswers = day && day.answers ? day.answers : {};
     var answerValues = objectValues(dayAnswers);
     var known = countKnown(answerValues);
+    var wrongIds = getTodayWrongIds();
     els.summaryText.textContent = "认识 " + known + " 个，不认识 " + (answerValues.length - known) + " 个。";
+    if (els.reviewAgainButton) {
+      els.reviewAgainButton.textContent = wrongIds.length ? "复习错词 " + wrongIds.length : "今天没有错词";
+      els.reviewAgainButton.disabled = !wrongIds.length;
+    }
     return;
   }
 
@@ -365,7 +365,7 @@ function startListeningTest() {
 
 function startTodayListeningReview() {
   closeSettingsPanel();
-  startChoiceTest(mapIdsToWords(getTodayIds()), true, "今天再听");
+  startChoiceTest(mapIdsToWords(getTodayIds()), true, "今天测试");
 }
 
 function startChoiceTest(pool, listening, title) {
@@ -904,12 +904,21 @@ function forceAutoSpeak(key, text) {
 }
 
 function reviewMistakes() {
+  var wrongIds = getTodayWrongIds();
+  if (!wrongIds.length) {
+    renderCard();
+    return;
+  }
+  startReview(wrongIds, "mistakes");
+}
+
+function getTodayWrongIds() {
   var answers = state.days[today] && state.days[today].answers ? state.days[today].answers : {};
   var wrongIds = [];
   for (var id in answers) {
-    if (Object.prototype.hasOwnProperty.call(answers, id) && !answers[id]) wrongIds.push(Number(id));
+    if (Object.prototype.hasOwnProperty.call(answers, id) && answers[id] === false) wrongIds.push(Number(id));
   }
-  startReview(wrongIds, "mistakes");
+  return wrongIds;
 }
 
 function reviewTodayWords() {
@@ -977,22 +986,6 @@ function cancelReview() {
   learningAutoSpeakArmed = false;
   clearPanelHistory("review");
   saveState();
-  render();
-}
-
-function resetToday() {
-  var oldDay = state.days[today];
-  var ids = oldDay && oldDay.ids ? oldDay.ids : [];
-  state.days[today] = { ids: ids, answers: {}, completed: false };
-  state.activeReview = null;
-  saveState();
-  state = loadState();
-  reviewSession = null;
-  session = buildSession();
-  index = 0;
-  flipped = false;
-  learningAutoSpeakArmed = false;
-  reviewMode = false;
   render();
 }
 

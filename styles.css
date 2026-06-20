@@ -127,6 +127,7 @@ h1 {
 }
 
 .listen-entry {
+  grid-column: 1 / -1;
   background: #2f6f5e;
 }
 
