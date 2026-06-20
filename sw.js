@@ -1,4 +1,4 @@
-const CACHE_NAME = "daily-myanmar-words-v35";
+const CACHE_NAME = "daily-myanmar-words-v36";
 const ASSETS = [
   "./",
   "./index.html",
@@ -10,7 +10,9 @@ const ASSETS = [
   "./app.js",
   "./manifest.webmanifest",
   "./icon.svg",
-  "./icon-512.png"
+  "./icon-512.png",
+  "./home-hero-bg.png",
+  "./complete-bg.png"
 ];
 
 self.addEventListener("install", (event) => {

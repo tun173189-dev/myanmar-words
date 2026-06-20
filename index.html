@@ -5,23 +5,27 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#f7f3ea" />
     <title>缅语记单词</title>
-    <link rel="manifest" href="manifest.webmanifest?v=35" />
+    <link rel="manifest" href="manifest.webmanifest?v=36" />
     <style>
 :root {
   color-scheme: light;
   font-family: "Inter", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
-  background: #f7f5f1;
-  color: #111827;
-  --green: #1e7a6b;
-  --green-soft: #e1f0ec;
-  --green-pale: #f0f8f5;
-  --navy: #263047;
-  --amber: #f3a33b;
-  --paper: #ffffff;
+  background: #f8f4ed;
+  color: #14202b;
+  --green: #15836f;
+  --green-dark: #0f6b5b;
+  --green-soft: #e7f3ef;
+  --mint: #f3faf7;
+  --navy: #24304a;
+  --amber: #f3a43b;
+  --blue: #2d8bd5;
+  --paper: rgba(255, 255, 255, 0.94);
   --cream: #f8f3ec;
-  --line: rgba(17, 24, 39, 0.08);
-  --muted: #6b7280;
-  --shadow: 0 12px 30px rgba(17, 24, 39, 0.08);
+  --sand: #eee5da;
+  --line: rgba(20, 32, 43, 0.09);
+  --muted: #6c7682;
+  --soft-shadow: 0 14px 34px rgba(20, 32, 43, 0.08);
+  --deep-shadow: 0 18px 38px rgba(21, 131, 111, 0.18);
 }
 
 * {
@@ -31,381 +35,826 @@
 body {
   margin: 0;
   min-height: 100vh;
-  background: #f7f5f1;
+  background:
+    radial-gradient(circle at 20% 10%, rgba(255, 255, 255, 0.9), transparent 28%),
+    linear-gradient(180deg, #fbf8f2 0%, #f4eee6 100%);
+}
+
+button,
+select {
+  font: inherit;
 }
 
 button {
   border: 0;
-  font: inherit;
   cursor: pointer;
-}
-
-.app-shell {
-  width: min(100%, 430px);
-  min-height: 100vh;
-  margin: 0 auto;
-  padding: 14px 16px 22px;
-  display: flex;
-  flex-direction: column;
-  gap: 11px;
-}
-
-.topbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding-top: env(safe-area-inset-top);
-}
-
-.top-actions {
-  display: flex;
-  gap: 8px;
-}
-
-.eyebrow {
-  margin: 0 0 5px;
-  color: var(--muted);
-  font-size: 12px;
-  font-weight: 650;
 }
 
 h1,
 h2,
+h3,
 p {
   margin: 0;
 }
 
-h1 {
+.app-shell {
+  position: relative;
+  width: min(100%, 430px);
+  min-height: 100vh;
+  margin: 0 auto;
+  padding-bottom: calc(86px + env(safe-area-inset-bottom));
+  overflow: hidden;
+}
+
+.view {
+  min-height: 100vh;
+}
+
+.home-view {
+  padding-bottom: 18px;
+}
+
+.home-hero {
+  min-height: 230px;
+  padding: calc(24px + env(safe-area-inset-top)) 24px 58px;
+  background:
+    linear-gradient(180deg, rgba(248, 244, 237, 0.18), rgba(248, 244, 237, 0.92) 86%, #f8f4ed 100%),
+    url("home-hero-bg.png") center top / cover no-repeat;
+}
+
+.home-hero h1 {
+  margin-top: 12px;
+  color: #07594e;
+  font-size: 32px;
+  line-height: 1.1;
+  font-weight: 850;
+  letter-spacing: 0;
+}
+
+.eyebrow,
+.date-line {
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.date-line {
+  margin-top: 10px;
   font-size: 18px;
-  line-height: 1.2;
-  font-weight: 760;
+  font-weight: 650;
 }
 
-.icon-button,
-.speak {
-  width: 46px;
-  height: 46px;
-  flex: 0 0 46px;
-  border-radius: 50%;
-  background: var(--paper);
-  color: #1f2937;
-  box-shadow: var(--shadow);
-}
-
-#settingsButton {
+.settings-float,
+.icon-button {
   width: 48px;
   height: 48px;
-  flex-basis: 48px;
-  color: var(--green);
-  font-size: 22px;
-  box-shadow: 0 10px 24px rgba(30, 122, 107, 0.14);
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.86);
+  color: #0d5f55;
+  font-size: 24px;
+  box-shadow: var(--soft-shadow);
+}
+
+.settings-float {
+  position: absolute;
+  top: calc(34px + env(safe-area-inset-top));
+  right: 24px;
+}
+
+.home-content {
+  display: grid;
+  gap: 16px;
+  padding: 0 18px 34px;
+  margin-top: -40px;
+}
+
+.home-view.day-complete .today-card {
+  display: none;
+}
+
+.today-card,
+.stat-card,
+.review-panel,
+.done-panel,
+.recommend-entry,
+.settings-group,
+.word-card,
+.test-panel,
+.story-panel {
+  border: 1px solid var(--line);
+  background: var(--paper);
+  box-shadow: var(--soft-shadow);
+  backdrop-filter: blur(10px);
+}
+
+.today-card {
+  display: grid;
+  gap: 18px;
+  padding: 22px;
+  border-radius: 18px;
+}
+
+.card-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--green-dark);
+  font-size: 19px;
+  font-weight: 850;
+}
+
+.title-icon {
+  width: 24px;
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 7px;
+  background: var(--green);
+  color: white;
+  font-size: 15px;
+}
+
+.today-main {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 16px;
+}
+
+.today-main strong {
+  color: #0d1d29;
+  font-size: 48px;
+  line-height: 1;
+  font-weight: 850;
+}
+
+.today-main p {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  margin-top: 14px;
+  color: #263341;
+  font-size: 16px;
+}
+
+.today-main i {
+  width: 1px;
+  height: 18px;
+  background: var(--line);
+}
+
+.primary,
+.secondary,
+.test-speak {
+  min-height: 52px;
+  padding: 0 18px;
+  border-radius: 14px;
+  font-weight: 850;
+}
+
+.primary {
+  color: white;
+  background: linear-gradient(135deg, #16947d, #087561);
+  box-shadow: var(--deep-shadow);
+}
+
+.secondary {
+  color: #7a321f;
+  background: #f8e9df;
+}
+
+.pill-action {
+  min-width: 138px;
+  border-radius: 999px;
+  font-size: 17px;
+}
+
+.progress-track,
+.study-progress-track,
+.mini-progress {
+  width: 100%;
+  height: 9px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #e9e2d8;
+}
+
+.progress-track span,
+.study-progress-track span,
+.mini-progress span {
+  display: block;
+  width: 0;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--green), #1ea38b);
+}
+
+.today-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  color: var(--muted);
+  font-size: 15px;
+}
+
+.today-footer button {
+  flex: 0 0 auto;
+  padding: 0;
+  background: transparent;
+  color: #65707c;
+  font-weight: 700;
 }
 
 .stats {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 9px;
+  gap: 14px;
 }
 
-.stats div {
-  min-height: 66px;
-  padding: 12px;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  background: var(--paper);
-  box-shadow: 0 8px 20px rgba(17, 24, 39, 0.04);
+.stat-card {
+  min-height: 122px;
+  padding: 16px;
+  border-radius: 16px;
 }
 
-.stats span {
+.round-icon,
+.recommend-icon,
+.setting-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--green);
+}
+
+.icon-sprite {
+  position: absolute;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+}
+
+.setting-icon svg,
+.bottom-nav svg,
+.recommend-icon svg,
+.round-icon svg {
+  width: 24px;
+  height: 24px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.round-icon {
+  width: 46px;
+  height: 46px;
+  margin-bottom: 10px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #76d6ae, var(--green));
+  color: white;
+  font-size: 22px;
+}
+
+.chart-icon {
+  background: linear-gradient(135deg, #5fb6ed, var(--green));
+}
+
+.stat-card p {
+  color: #3b4652;
+  font-size: 15px;
+  font-weight: 750;
+}
+
+.stat-card strong {
   display: block;
-  font-size: 23px;
-  font-weight: 780;
+  margin-top: 4px;
+  color: #0d1d29;
+  font-size: 26px;
   line-height: 1.1;
+  font-weight: 850;
 }
 
-.stats small {
+#learnedTotalText {
+  font-size: 23px;
+  white-space: nowrap;
+}
+
+.stat-card small {
   display: block;
-  margin-top: 6px;
+  margin-top: 8px;
   color: var(--muted);
-  font-size: 12px;
-}
-
-.learning-overview {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
-  padding: 12px;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  background: var(--paper);
-  color: #374151;
   font-size: 13px;
-  font-weight: 760;
-  box-shadow: 0 8px 20px rgba(17, 24, 39, 0.04);
 }
 
-.learning-overview p {
-  margin: 0;
+.mini-progress {
+  height: 7px;
+  margin-top: 12px;
+}
+
+.section-heading {
+  margin: 10px 2px 0;
+  color: #152231;
+  font-size: 20px;
+  font-weight: 850;
 }
 
 .test-actions {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 9px;
-}
-
-.test-entry {
-  min-height: 50px;
-  padding: 0 16px;
-  border-radius: 8px;
-  background: var(--navy);
-  color: white;
-  font-weight: 780;
-  text-align: left;
-  box-shadow: 0 12px 24px rgba(38, 48, 71, 0.12);
-}
-
-.listen-entry {
-  grid-column: 1 / -1;
-  background: var(--green);
-}
-
-.story-entry {
-  grid-column: 1 / -1;
-  background: #6b7280;
-}
-
-.settings-panel {
-  padding: 16px;
-  border: 1px solid var(--line);
-  border-radius: 8px;
+  overflow: hidden;
+  border-radius: 16px;
   background: var(--paper);
-  display: grid;
-  gap: 16px;
-  box-shadow: var(--shadow);
+  border: 1px solid var(--line);
+  box-shadow: var(--soft-shadow);
 }
 
-.settings-group {
+.recommend-entry {
+  width: 100%;
+  min-height: 74px;
   display: grid;
-  gap: 12px;
-}
-
-.setting-row,
-.toggle-row {
-  min-height: 46px;
-  padding: 8px 0;
-  border-bottom: 1px solid var(--line);
-  display: flex;
+  grid-template-columns: 52px 1fr auto;
   align-items: center;
-  justify-content: space-between;
   gap: 14px;
-  color: #1f2937;
-  font-weight: 730;
+  padding: 12px 16px;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  box-shadow: none;
+  text-align: left;
 }
 
-.setting-row:last-child,
-.toggle-row:last-child {
+.recommend-entry:last-child {
   border-bottom: 0;
 }
 
-select {
-  min-width: 154px;
-  min-height: 40px;
-  padding: 0 12px;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  background: #fbfaf8;
-  color: #111827;
-  font: inherit;
+.recommend-entry strong {
+  display: block;
+  color: #152231;
+  font-size: 17px;
+  font-weight: 850;
 }
 
-input[type="checkbox"] {
-  width: 22px;
-  height: 22px;
-  accent-color: var(--green);
+.recommend-entry small {
+  display: block;
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 13px;
 }
 
-.card-area {
-  display: grid;
-  min-height: clamp(250px, 35vh, 330px);
+.recommend-entry b {
+  color: #7c8590;
+  font-size: 28px;
+  font-weight: 400;
 }
 
-.word-card {
-  width: 100%;
-  min-height: clamp(250px, 35vh, 330px);
-  padding: 22px 18px;
-  border-radius: 8px;
-  background: var(--paper);
-  color: #111827;
-  border: 1px solid var(--line);
-  box-shadow: var(--shadow);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  text-align: center;
+.recommend-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 13px;
+  font-size: 22px;
 }
 
-.word-type-badge {
-  padding: 5px 10px;
-  border-radius: 999px;
+.recommend-icon.amber {
+  color: #f0a32f;
+  background: #fff3df;
+}
+
+.recommend-icon.blue {
+  color: var(--blue);
+  background: #eaf5ff;
+}
+
+.recommend-icon.green {
   background: var(--green-soft);
-  color: var(--green);
-  font-size: 12px;
-  font-weight: 800;
 }
 
-.card-hint {
-  color: var(--muted);
-  font-size: 12px;
+.review-panel,
+.done-panel {
+  display: grid;
+  gap: 14px;
+  padding: 18px;
+  border-radius: 18px;
 }
 
-.word {
-  max-width: 100%;
-  font-size: 38px;
-  font-weight: 800;
-  line-height: 1.16;
-  overflow-wrap: anywhere;
+.done-panel {
+  position: relative;
+  overflow: hidden;
+  padding-top: 118px;
+  text-align: center;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.76), rgba(255, 255, 255, 0.96)),
+    url("complete-bg.png") center top / cover no-repeat;
 }
 
-.phonetic {
-  color: var(--muted);
+.complete-visual {
+  position: absolute;
+  top: 28px;
+  left: 50%;
+  width: 68px;
+  height: 68px;
+  transform: translateX(-50%);
+  border-radius: 22px;
+  background: linear-gradient(135deg, #42a68e, #0f735f);
+  box-shadow: var(--deep-shadow);
+}
+
+.complete-visual::after {
+  content: "✓";
+  color: white;
+  font-size: 42px;
+  line-height: 68px;
+  font-weight: 850;
+}
+
+.done-panel h2 {
+  color: #152231;
+  font-size: 28px;
+  font-weight: 850;
+}
+
+.done-panel p,
+.review-panel p {
+  color: #4f5965;
   font-size: 16px;
   line-height: 1.45;
 }
 
-.meaning {
-  font-size: 20px;
-  font-weight: 760;
-}
-
-.example,
-.example-cn {
-  max-width: 100%;
-  color: #374151;
-  font-size: 15px;
-  line-height: 1.5;
-}
-
-.example-cn {
-  color: var(--muted);
-}
-
-.example-tools {
-  margin-top: 4px;
-}
-
-.mini-speak {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 38px;
-  padding: 0 14px;
-  border-radius: 999px;
-  background: var(--green-soft);
-  color: var(--green);
-  font-size: 14px;
-  font-weight: 750;
-}
-
-.actions {
+.done-actions,
+.review-actions {
   display: grid;
-  grid-template-columns: 1fr 54px 1fr;
-  align-items: center;
   gap: 10px;
-}
-
-.audio-status {
-  min-height: 18px;
-  margin: -8px 0 0;
-  color: var(--muted);
-  font-size: 13px;
-  text-align: center;
-}
-
-.primary,
-.secondary {
-  min-height: 50px;
-  padding: 0 18px;
-  border-radius: 8px;
-  font-weight: 780;
-}
-
-.primary {
-  background: var(--green);
-  color: white;
-  box-shadow: 0 12px 24px rgba(30, 122, 107, 0.14);
-}
-
-.secondary {
-  background: #f2e8df;
-  color: #7a3f2b;
 }
 
 .full {
   width: 100%;
 }
 
-.review-panel,
-.done-panel {
-  padding: 18px;
-  border-radius: 8px;
-  background: var(--paper);
-  border: 1px solid var(--line);
-  box-shadow: var(--shadow);
+.listen-primary {
+  background: linear-gradient(135deg, #293654, #1f2942);
+  box-shadow: 0 16px 34px rgba(36, 48, 74, 0.16);
+}
+
+.bottom-nav {
+  position: fixed;
+  left: 50%;
+  bottom: 0;
+  z-index: 20;
+  width: min(100%, 430px);
+  min-height: calc(72px + env(safe-area-inset-bottom));
   display: grid;
-  gap: 13px;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 4px;
+  padding: 8px 12px calc(8px + env(safe-area-inset-bottom));
+  transform: translateX(-50%);
+  border-top: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(14px);
 }
 
-.review-panel h2,
-.done-panel h2 {
-  font-size: 22px;
+.bottom-nav button {
+  display: grid;
+  place-items: center;
+  gap: 4px;
+  background: transparent;
+  color: #66717c;
+  font-size: 12px;
+  font-weight: 750;
 }
 
-.review-panel p,
-.done-panel p {
-  color: #4b5563;
+.bottom-nav span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+}
+
+.bottom-nav b {
+  font-weight: 800;
+}
+
+.bottom-nav .active {
+  color: var(--green);
+}
+
+.study-view,
+.test-panel,
+.story-panel,
+.settings-panel {
+  padding: calc(18px + env(safe-area-inset-top)) 18px 24px;
+}
+
+.study-view {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(248, 244, 237, 0.8)),
+    #fbf8f2;
+}
+
+.study-head,
+.test-head,
+.story-head {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 12px;
+}
+
+.study-head {
+  padding-right: 54px;
+}
+
+.study-head span:first-of-type {
+  justify-self: start;
+  color: #1f2937;
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.study-head strong {
+  justify-self: center;
+  color: #111827;
+  font-size: 26px;
+  font-weight: 850;
+}
+
+.plain-back {
+  position: absolute;
+  top: calc(20px + env(safe-area-inset-top));
+  right: 18px;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: transparent;
+  color: #111827;
+  font-size: 34px;
+  line-height: 1;
+}
+
+.word-type-badge {
+  justify-self: end;
+  padding: 7px 13px;
+  border-radius: 999px;
+  background: var(--green-soft);
+  color: var(--green-dark);
+  font-size: 14px;
+  font-weight: 850;
+}
+
+.study-progress-track {
+  height: 7px;
+}
+
+.card-area {
+  display: grid;
+  flex: 1;
+  min-height: 0;
+}
+
+.word-card {
+  width: 100%;
+  min-height: 410px;
+  align-self: stretch;
+  padding: 30px 24px;
+  border-radius: 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  color: #111827;
+  text-align: center;
+}
+
+.word {
+  max-width: 100%;
+  font-size: clamp(40px, 12vw, 58px);
+  line-height: 1.08;
+  font-weight: 850;
+  overflow-wrap: anywhere;
+}
+
+.phonetic {
+  color: var(--muted);
+  font-size: 21px;
+  line-height: 1.35;
+}
+
+.mini-speak {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  padding: 0 16px;
+  border-radius: 999px;
+  background: var(--mint);
+  color: var(--green-dark);
+  font-size: 15px;
+  font-weight: 850;
+  border: 1px solid rgba(21, 131, 111, 0.12);
+}
+
+.divider {
+  width: 100%;
+  height: 1px;
+  margin: 8px 0;
+  border-top: 1px dashed rgba(20, 32, 43, 0.15);
+}
+
+.card-hint {
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.meaning {
+  color: #111827;
+  font-size: 34px;
+  font-weight: 850;
+}
+
+.example-card {
+  width: 100%;
+  display: grid;
+  gap: 8px;
+  margin-top: 8px;
+  padding: 16px;
+  border-radius: 16px;
+  background: #f8fbfa;
+  border: 1px solid var(--line);
+  text-align: left;
+}
+
+.example-label {
+  justify-self: start;
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: var(--green-soft);
+  color: var(--green-dark);
+  font-size: 13px;
+  font-weight: 850;
+}
+
+.example,
+.example-cn {
+  max-width: 100%;
+  color: #1f2937;
+  font-size: 17px;
   line-height: 1.45;
 }
 
-.review-actions,
-.done-actions {
+.example-cn {
+  color: var(--muted);
+}
+
+.actions {
   display: grid;
-  gap: 10px;
+  grid-template-columns: 1fr 64px 1fr;
+  align-items: center;
+  gap: 14px;
 }
 
-.listen-primary {
-  background: var(--navy);
+.speak {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: white;
+  color: var(--green);
+  font-size: 26px;
+  box-shadow: var(--soft-shadow);
 }
 
-button:disabled {
-  opacity: 0.48;
-  cursor: not-allowed;
+.audio-status {
+  min-height: 18px;
+  color: var(--muted);
+  font-size: 14px;
+  text-align: center;
+}
+
+.settings-panel {
+  display: grid;
+  align-content: start;
+  gap: 22px;
+  background: #fbf8f2;
+}
+
+.settings-panel h2 {
+  margin: 28px 0 18px;
+  text-align: center;
+  color: #152231;
+  font-size: 30px;
+  font-weight: 850;
+}
+
+.settings-group {
+  overflow: hidden;
+  border-radius: 18px;
+  box-shadow: var(--soft-shadow);
+}
+
+.setting-row,
+.toggle-row,
+.setting-link {
+  width: 100%;
+  min-height: 72px;
+  display: grid;
+  grid-template-columns: 40px 1fr auto;
+  align-items: center;
+  gap: 12px;
+  padding: 0 18px;
+  border-bottom: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.92);
+  color: #152231;
+  font-size: 17px;
+  font-weight: 850;
+  text-align: left;
+}
+
+.setting-row:last-child,
+.toggle-row:last-child,
+.setting-link:last-child {
+  border-bottom: 0;
+}
+
+.setting-icon {
+  width: 30px;
+  height: 30px;
+  color: var(--green);
+  font-size: 24px;
+}
+
+select {
+  min-width: 116px;
+  max-width: 166px;
+  height: 40px;
+  border: 0;
+  background: transparent;
+  color: #6b7280;
+  text-align: right;
+  font-size: 16px;
+  font-weight: 750;
+}
+
+input[type="checkbox"] {
+  appearance: none;
+  width: 52px;
+  height: 30px;
+  padding: 3px;
+  border-radius: 999px;
+  background: #d7ded9;
+  transition: background 0.2s ease;
+}
+
+input[type="checkbox"]::after {
+  content: "";
+  display: block;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: white;
+  box-shadow: 0 2px 8px rgba(20, 32, 43, 0.18);
+  transition: transform 0.2s ease;
+}
+
+input[type="checkbox"]:checked {
+  background: var(--green);
+}
+
+input[type="checkbox"]:checked::after {
+  transform: translateX(22px);
+}
+
+.setting-link b {
+  color: #7c8590;
+  font-size: 28px;
+  font-weight: 400;
 }
 
 .test-panel,
 .story-panel {
-  padding: 16px;
-  border-radius: 8px;
-  background: var(--paper);
-  border: 1px solid var(--line);
-  box-shadow: var(--shadow);
+  min-height: 100vh;
   display: grid;
-  gap: 14px;
+  align-content: start;
+  gap: 18px;
+  background: #fbf8f2;
 }
 
 .test-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
+  grid-template-columns: 1fr auto;
+}
+
+.test-head h2,
+.test-head .eyebrow {
+  color: #152231;
 }
 
 .test-word {
-  font-size: 36px;
-  font-weight: 800;
+  padding: 10px 4px;
+  color: #111827;
+  font-size: clamp(42px, 13vw, 58px);
+  font-weight: 850;
   line-height: 1.16;
   text-align: center;
   overflow-wrap: anywhere;
@@ -413,48 +862,46 @@ button:disabled {
 
 .test-speak {
   justify-self: center;
-  min-height: 42px;
-  padding: 0 16px;
+  min-height: 48px;
   border-radius: 999px;
   background: var(--green-soft);
-  color: var(--green);
-  font-size: 14px;
-  font-weight: 750;
+  color: var(--green-dark);
+  font-size: 16px;
 }
 
 .test-audio-button {
-  width: min(100%, 240px);
-  min-height: 52px;
-  border-radius: 8px;
-  background: var(--green);
+  width: min(100%, 285px);
+  min-height: 56px;
+  border-radius: 14px;
   color: white;
-  font-size: 17px;
-  box-shadow: 0 12px 24px rgba(30, 122, 107, 0.14);
+  background: var(--green);
+  box-shadow: var(--deep-shadow);
 }
 
 .choice-list {
   display: grid;
-  gap: 10px;
+  gap: 12px;
 }
 
 .choice {
-  min-height: 52px;
-  padding: 12px 14px;
-  border-radius: 8px;
-  background: #f3f4f6;
-  color: #111827;
-  font-weight: 700;
+  min-height: 64px;
+  padding: 14px 18px;
+  border-radius: 14px;
+  background: #f0ebe4;
+  color: #152231;
+  font-size: 18px;
+  font-weight: 850;
   text-align: left;
 }
 
 .choice.correct {
   background: var(--green-soft);
-  color: var(--green);
+  color: var(--green-dark);
 }
 
 .choice.wrong {
-  background: #f5dfd7;
-  color: #7a3326;
+  background: #f6ddd2;
+  color: #7a321f;
 }
 
 .test-feedback {
@@ -463,21 +910,35 @@ button:disabled {
   text-align: center;
 }
 
+.story-panel .test-head {
+  grid-template-columns: 1fr auto;
+  text-align: center;
+}
+
+.story-panel .test-head > div {
+  justify-self: center;
+}
+
 .story-list {
   display: flex;
   gap: 8px;
   overflow-x: auto;
-  padding-bottom: 2px;
+  padding: 2px 0 4px;
+  scrollbar-width: none;
+}
+
+.story-list::-webkit-scrollbar {
+  display: none;
 }
 
 .story-chip {
-  min-height: 36px;
-  padding: 0 12px;
+  min-height: 38px;
+  padding: 0 14px;
   border-radius: 999px;
-  background: #f3f4f6;
-  color: #374151;
-  font-size: 13px;
-  font-weight: 750;
+  background: var(--green-soft);
+  color: var(--green-dark);
+  font-size: 14px;
+  font-weight: 850;
   white-space: nowrap;
 }
 
@@ -487,193 +948,365 @@ button:disabled {
 }
 
 .story-card {
-  min-height: 160px;
-  padding: 14px;
-  border-radius: 8px;
-  background: var(--cream);
+  min-height: 300px;
   display: grid;
   align-content: center;
-  gap: 12px;
+  gap: 18px;
+  padding: 28px 22px;
+  border-radius: 22px;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  box-shadow: var(--soft-shadow);
   text-align: center;
 }
 
 .story-progress {
-  color: var(--muted);
-  font-size: 14px;
-  font-weight: 700;
+  justify-self: center;
+  padding: 7px 14px;
+  border-radius: 999px;
+  background: var(--green-soft);
+  color: var(--green-dark);
+  font-size: 15px;
+  font-weight: 850;
 }
 
 .story-sentence {
   color: #111827;
-  font-size: 25px;
-  font-weight: 800;
-  line-height: 1.28;
+  font-size: clamp(34px, 10vw, 46px);
+  font-weight: 850;
+  line-height: 1.22;
   overflow-wrap: anywhere;
 }
 
 .story-cn {
-  color: #4b5563;
-  font-size: 16px;
-  line-height: 1.5;
+  color: #1f2937;
+  font-size: 22px;
+  line-height: 1.45;
 }
 
 .story-toolbar {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 12px;
+  gap: 14px;
 }
 
 .story-controls {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
+  grid-template-columns: 1fr 86px 1fr;
+  gap: 12px;
+  align-items: center;
+}
+
+#storyPlayButton {
+  width: 86px;
+  height: 86px;
+  min-height: 86px;
+  padding: 0;
+  border-radius: 50%;
+  font-size: 0;
+}
+
+#storyPlayButton::after {
+  content: "▶";
+  font-size: 36px;
+}
+
+#storyPlayButton:disabled::after {
+  content: "✓";
+}
+
+#storyReplayButton {
+  grid-column: 1 / 2;
+}
+
+#storyNextButton {
+  grid-column: 3 / 4;
 }
 
 .hidden {
   display: none !important;
 }
 
-@media (max-width: 360px) {
-  .app-shell {
+button:disabled {
+  opacity: 0.48;
+  cursor: not-allowed;
+}
+
+@media (max-width: 380px) {
+  .home-hero {
+    min-height: 210px;
+    padding-inline: 20px;
+  }
+
+  .home-hero h1 {
+    font-size: 28px;
+  }
+
+  .home-content,
+  .study-view,
+  .test-panel,
+  .story-panel,
+  .settings-panel {
     padding-inline: 14px;
-    gap: 9px;
   }
 
-  h1 {
-    font-size: 17px;
+  .today-card {
+    padding: 18px;
   }
 
-  .word {
-    font-size: 33px;
-  }
-
-  .card-area,
-  .word-card {
-    min-height: 230px;
-  }
-
-  .learning-overview {
+  .today-main {
     grid-template-columns: 1fr;
-    gap: 4px;
   }
 
-  .story-sentence {
-    font-size: 24px;
+  .pill-action {
+    width: 100%;
   }
 
-  .story-card {
-    min-height: 150px;
+  .today-main strong {
+    font-size: 42px;
+  }
+
+  .stats {
+    gap: 10px;
+  }
+
+  .stat-card {
+    padding: 14px;
+  }
+
+  .word-card {
+    min-height: 390px;
+    padding: 26px 18px;
   }
 }
 
 @media (max-height: 760px) {
-  .app-shell {
-    gap: 8px;
-    padding-block: 10px 18px;
+  .home-hero {
+    min-height: 190px;
+    padding-bottom: 44px;
   }
 
-  .stats div {
-    min-height: 54px;
-    padding: 8px 10px;
+  .home-content {
+    gap: 12px;
   }
 
-  .stats span {
-    font-size: 21px;
+  .today-card {
+    gap: 13px;
   }
 
-  .test-entry {
-    min-height: 42px;
+  .stat-card {
+    min-height: 106px;
   }
 
-  .card-area,
-  .word-card {
-    min-height: 235px;
+  .recommend-entry {
+    min-height: 64px;
   }
 
   .word-card {
-    padding: 18px;
+    min-height: 350px;
+    padding-block: 24px;
   }
 
-  .word {
-    font-size: 34px;
-  }
-
-  .phonetic {
-    font-size: 15px;
-  }
-
-  .primary,
-  .secondary {
-    min-height: 48px;
+  .story-card {
+    min-height: 240px;
   }
 }
+
     </style>
   </head>
   <body>
+    <svg class="icon-sprite" aria-hidden="true">
+      <symbol id="icon-home" viewBox="0 0 24 24">
+        <path d="M3 11.5 12 4l9 7.5"></path>
+        <path d="M5 10.5V20h14v-9.5"></path>
+        <path d="M9.5 20v-6h5v6"></path>
+      </symbol>
+      <symbol id="icon-book" viewBox="0 0 24 24">
+        <path d="M4 5.5A3.5 3.5 0 0 1 7.5 2H20v17H7.5A3.5 3.5 0 0 0 4 22V5.5z"></path>
+        <path d="M4 5.5A3.5 3.5 0 0 1 7.5 9H20"></path>
+      </symbol>
+      <symbol id="icon-headphones" viewBox="0 0 24 24">
+        <path d="M4 13a8 8 0 0 1 16 0"></path>
+        <path d="M4 13v5a2 2 0 0 0 2 2h2v-7H6a2 2 0 0 0-2 2"></path>
+        <path d="M20 13v5a2 2 0 0 1-2 2h-2v-7h2a2 2 0 0 1 2 2"></path>
+      </symbol>
+      <symbol id="icon-settings" viewBox="0 0 24 24">
+        <path d="M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8z"></path>
+        <path d="M19.4 13.5c.1-.5.1-1 .1-1.5s0-1-.1-1.5l2-1.5-2-3.5-2.4 1a7.5 7.5 0 0 0-2.6-1.5L14 2h-4l-.4 3A7.5 7.5 0 0 0 7 6.5l-2.4-1-2 3.5 2 1.5c-.1.5-.1 1-.1 1.5s0 1 .1 1.5l-2 1.5 2 3.5 2.4-1A7.5 7.5 0 0 0 9.6 19l.4 3h4l.4-3a7.5 7.5 0 0 0 2.6-1.5l2.4 1 2-3.5-2-1.5z"></path>
+      </symbol>
+      <symbol id="icon-calendar" viewBox="0 0 24 24">
+        <path d="M7 3v4"></path><path d="M17 3v4"></path>
+        <path d="M4 8h16"></path><rect x="4" y="5" width="16" height="16" rx="3"></rect>
+      </symbol>
+      <symbol id="icon-cube" viewBox="0 0 24 24">
+        <path d="m12 3 8 4.5v9L12 21l-8-4.5v-9L12 3z"></path>
+        <path d="m4 7.5 8 4.5 8-4.5"></path><path d="M12 12v9"></path>
+      </symbol>
+      <symbol id="icon-globe" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="9"></circle>
+        <path d="M3 12h18"></path><path d="M12 3c2.5 2.4 3.8 5.4 3.8 9S14.5 18.6 12 21"></path>
+        <path d="M12 3C9.5 5.4 8.2 8.4 8.2 12S9.5 18.6 12 21"></path>
+      </symbol>
+      <symbol id="icon-clock" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path>
+      </symbol>
+      <symbol id="icon-volume" viewBox="0 0 24 24">
+        <path d="M4 10v4h4l5 4V6l-5 4H4z"></path>
+        <path d="M17 9a4 4 0 0 1 0 6"></path><path d="M19.5 6.5a8 8 0 0 1 0 11"></path>
+      </symbol>
+      <symbol id="icon-bell" viewBox="0 0 24 24">
+        <path d="M6 10a6 6 0 0 1 12 0c0 7 3 6 3 8H3c0-2 3-1 3-8z"></path>
+        <path d="M10 21h4"></path>
+      </symbol>
+      <symbol id="icon-user" viewBox="0 0 24 24">
+        <circle cx="12" cy="8" r="4"></circle><path d="M4 21a8 8 0 0 1 16 0"></path>
+      </symbol>
+      <symbol id="icon-message" viewBox="0 0 24 24">
+        <path d="M4 5h16v11H8l-4 4V5z"></path><path d="M8 9h8"></path><path d="M8 13h5"></path>
+      </symbol>
+      <symbol id="icon-chart" viewBox="0 0 24 24">
+        <path d="M4 20h16"></path>
+        <path d="M7 16V9"></path><path d="M12 16V5"></path><path d="M17 16v-4"></path>
+        <rect x="6" y="16" width="2" height="4" rx="1"></rect>
+        <rect x="11" y="12" width="2" height="8" rx="1"></rect>
+        <rect x="16" y="15" width="2" height="5" rx="1"></rect>
+      </symbol>
+      <symbol id="icon-list" viewBox="0 0 24 24">
+        <path d="M8 6h12"></path><path d="M8 12h12"></path><path d="M8 18h12"></path>
+        <path d="M4 6h.01"></path><path d="M4 12h.01"></path><path d="M4 18h.01"></path>
+      </symbol>
+    </svg>
     <main class="app-shell">
-      <header class="topbar" id="homeTopbar">
-        <div>
-          <p class="eyebrow">缅语记单词</p>
-          <h1 id="todayTitle">今天</h1>
-        </div>
-        <div class="top-actions">
-          <button class="icon-button" id="settingsButton" type="button" aria-label="设置" title="设置">⚙</button>
-        </div>
-      </header>
-
-      <section class="stats" aria-label="今日进度">
-        <div>
-          <span id="progressText">0 / 10</span>
-          <small id="progressLabel">今日进度</small>
-        </div>
-        <div>
-          <span id="streakText">0 天</span>
-          <small>连续学习</small>
-        </div>
-      </section>
-
-      <section class="learning-overview" id="learningOverview" aria-label="学习进度">
-        <p id="learnedTotalText">总进度 0 / 1000</p>
-        <p id="todayMixText">今日：新词 0，复习 0</p>
-      </section>
-
-      <section class="review-panel hidden" id="weeklyReviewPanel" aria-live="polite">
-        <p class="eyebrow">复习提醒</p>
-        <h2 id="weeklyReviewTitle">本周该复习了</h2>
-        <p id="weeklyReviewSummary">这段时间学了 0 个词，先完整复习一遍，再做小测。</p>
-        <div class="review-actions">
-          <button class="primary full" id="weeklyReviewButton" type="button">开始本周复习</button>
-          <button class="primary full listen-primary" id="weeklyTestDueButton" type="button">开始本周小测</button>
-          <button class="secondary full" id="weakReviewButton" type="button">复习没掌握的词</button>
-        </div>
-      </section>
-
-      <section class="done-panel hidden" id="donePanel" aria-live="polite">
-        <h2>今天完成了</h2>
-        <p id="summaryText">认识 0 个，不认识 0 个。</p>
-        <div class="done-actions">
-          <button class="primary full" id="reviewTodayButton" type="button">今天再复习</button>
-          <button class="primary full listen-primary" id="listenTodayButton" type="button">今天测试</button>
-          <button class="secondary full" id="reviewAgainButton" type="button">复习错词</button>
-        </div>
-      </section>
-
-      <div class="test-actions">
-        <button class="test-entry listen-entry" id="startListeningTestButton" type="button">听力小测</button>
-        <button class="test-entry story-entry" id="startStoryButton" type="button">听力短句练习</button>
-      </div>
-
-      <section class="settings-panel hidden" id="settingsPanel" aria-label="设置">
-        <div class="test-head">
+      <section class="view home-view" id="homeView">
+        <header class="home-hero" id="homeTopbar">
           <div>
-            <p class="eyebrow">设置</p>
-            <h2>学习偏好</h2>
+            <p class="eyebrow">每日缅语学习</p>
+            <h1>缅语记单词</h1>
+            <p class="date-line" id="todayTitle">今天</p>
           </div>
-          <button class="icon-button" id="closeSettingsButton" type="button" aria-label="返回首页" title="返回首页">×</button>
+          <button class="icon-button settings-float" id="settingsButton" type="button" aria-label="设置" title="设置">⚙</button>
+        </header>
+
+        <div class="home-content">
+          <section class="done-panel hidden" id="donePanel" aria-live="polite">
+            <div class="complete-visual"></div>
+            <h2>今天完成了</h2>
+            <p id="summaryText">今日掌握 0 个。</p>
+            <div class="done-actions">
+              <button class="primary full" id="reviewTodayButton" type="button">继续复习</button>
+              <button class="primary full listen-primary" id="listenTodayButton" type="button">今天测试</button>
+              <button class="secondary full" id="reviewAgainButton" type="button">错词复习</button>
+            </div>
+          </section>
+
+          <section class="today-card" aria-label="今日学习">
+            <div class="card-title">
+              <span class="title-icon">✓</span>
+              <span>今日学习</span>
+            </div>
+            <div class="today-main">
+              <div>
+                <strong id="homeProgressText">0 / 10</strong>
+                <p><span id="homeNewCountText">新词 0</span><i></i><span id="homeReviewCountText">复习 0</span></p>
+              </div>
+              <button class="primary pill-action" id="startStudyButton" type="button">继续学习</button>
+            </div>
+            <div class="progress-track"><span id="dailyProgressFill"></span></div>
+            <div class="today-footer">
+              <span id="homeEncouragement">坚持学习，进步看得见！</span>
+              <button id="adjustPlanButton" type="button">调整计划 ›</button>
+            </div>
+          </section>
+
+          <section class="stats" aria-label="学习状态">
+            <div class="stat-card">
+              <span class="round-icon" aria-hidden="true"><svg><use href="#icon-calendar"></use></svg></span>
+              <p>连续学习</p>
+              <strong id="streakText">0 天</strong>
+              <small>继续加油</small>
+            </div>
+            <div class="stat-card">
+              <span class="round-icon chart-icon" aria-hidden="true"><svg><use href="#icon-chart"></use></svg></span>
+              <p>总进度</p>
+              <strong id="learnedTotalText">0 / 1000</strong>
+              <small id="todayMixText">今日词汇 0 个</small>
+              <div class="mini-progress"><span id="totalProgressFill"></span></div>
+            </div>
+          </section>
+
+          <section class="review-panel hidden" id="weeklyReviewPanel" aria-live="polite">
+            <p class="eyebrow">复习提醒</p>
+            <h2 id="weeklyReviewTitle">本周该复习了</h2>
+            <p id="weeklyReviewSummary">这段时间学了 0 个词，先完整复习一遍，再做小测。</p>
+            <div class="review-actions">
+              <button class="primary full" id="weeklyReviewButton" type="button">开始本周复习</button>
+              <button class="primary full listen-primary" id="weeklyTestDueButton" type="button">开始本周小测</button>
+              <button class="secondary full" id="weakReviewButton" type="button">复习没掌握的词</button>
+            </div>
+          </section>
+
+          <h2 class="section-heading">今日推荐</h2>
+          <div class="test-actions">
+            <button class="recommend-entry" id="startListeningTestButton" type="button">
+              <span class="recommend-icon amber" aria-hidden="true"><svg><use href="#icon-headphones"></use></svg></span>
+              <span><strong>听力小测</strong><small>快速测试掌握情况</small></span>
+              <b>›</b>
+            </button>
+            <button class="recommend-entry" id="startStoryButton" type="button">
+              <span class="recommend-icon blue" aria-hidden="true"><svg><use href="#icon-volume"></use></svg></span>
+              <span><strong>听力短句练习</strong><small>场景听力训练</small></span>
+              <b>›</b>
+            </button>
+            <button class="recommend-entry" id="homeMistakeButton" type="button">
+              <span class="recommend-icon green" aria-hidden="true"><svg><use href="#icon-list"></use></svg></span>
+              <span><strong>错词复习</strong><small>巩固薄弱词汇</small></span>
+              <b>›</b>
+            </button>
+          </div>
         </div>
+      </section>
+
+      <section class="view study-view hidden" id="studyView">
+        <header class="study-head">
+          <button class="plain-back" id="studyBackButton" type="button" aria-label="返回首页">×</button>
+          <span id="progressLabel">学习卡片</span>
+          <strong id="progressText">0 / 10</strong>
+          <span class="word-type-badge" id="wordTypeBadge">新词</span>
+        </header>
+        <div class="study-progress-track"><span id="studyProgressFill"></span></div>
+
+        <section class="card-area">
+          <section class="word-card" id="cardButton" role="button" tabindex="0" aria-label="点击显示中文">
+            <span class="word" id="wordText">မင်္ဂလာပါ</span>
+            <span class="phonetic" id="phoneticText"></span>
+            <button class="mini-speak word-speak-label" id="cardSpeakButton" type="button">播放发音</button>
+            <span class="divider"></span>
+            <span class="card-hint" id="cardHint">点击显示中文</span>
+            <span class="meaning hidden" id="meaningText"></span>
+            <span class="example-card hidden" id="exampleTools">
+              <span class="example-label">例句</span>
+              <span class="example" id="exampleText"></span>
+              <span class="example-cn" id="exampleCnText"></span>
+              <span class="mini-speak" id="speakExampleButton" role="button" tabindex="0">朗读例句</span>
+            </span>
+          </section>
+        </section>
+
+        <section class="actions" aria-label="学习操作">
+          <button class="secondary" id="unknownButton" type="button">✕ 不认识</button>
+          <button class="speak" id="speakButton" type="button" aria-label="朗读单词" title="朗读">🔊</button>
+          <button class="primary" id="knownButton" type="button">✓ 认识</button>
+        </section>
+        <p class="audio-status" id="audioStatus" aria-live="polite"></p>
+      </section>
+
+      <section class="settings-panel view hidden" id="settingsPanel" aria-label="设置">
+        <button class="hidden" id="closeSettingsButton" type="button" aria-label="返回首页">返回</button>
+        <h2>设置</h2>
         <div class="settings-group">
           <div class="setting-row">
-            <label for="dailyCountSelect">每天单词</label>
+            <span class="setting-icon" aria-hidden="true"><svg><use href="#icon-calendar"></use></svg></span>
+            <label for="dailyCountSelect">每日学习词数</label>
             <select id="dailyCountSelect">
               <option value="10">10 个</option>
               <option value="15">15 个</option>
@@ -683,6 +1316,7 @@ button:disabled {
             </select>
           </div>
           <div class="setting-row">
+            <span class="setting-icon" aria-hidden="true"><svg><use href="#icon-cube"></use></svg></span>
             <label for="categorySelect">练习场景</label>
             <select id="categorySelect">
               <option value="all">全部场景</option>
@@ -699,6 +1333,7 @@ button:disabled {
             </select>
           </div>
           <div class="setting-row">
+            <span class="setting-icon" aria-hidden="true"><svg><use href="#icon-globe"></use></svg></span>
             <label for="learningLanguageSelect">学习语言</label>
             <select id="learningLanguageSelect">
               <option value="zh">中文学缅语</option>
@@ -706,6 +1341,7 @@ button:disabled {
             </select>
           </div>
           <div class="setting-row">
+            <span class="setting-icon" aria-hidden="true"><svg><use href="#icon-clock"></use></svg></span>
             <label for="testIntervalSelect">小测间隔</label>
             <select id="testIntervalSelect">
               <option value="7">7 天</option>
@@ -713,40 +1349,26 @@ button:disabled {
               <option value="14">14 天</option>
             </select>
           </div>
+        </div>
+        <div class="settings-group">
           <label class="toggle-row">
-            <input id="autoSpeakToggle" type="checkbox" />
+            <span class="setting-icon" aria-hidden="true"><svg><use href="#icon-volume"></use></svg></span>
             <span>自动朗读</span>
+            <input id="autoSpeakToggle" type="checkbox" />
           </label>
           <label class="toggle-row">
-            <input id="notificationToggle" type="checkbox" />
+            <span class="setting-icon" aria-hidden="true"><svg><use href="#icon-bell"></use></svg></span>
             <span>学习提醒</span>
+            <input id="notificationToggle" type="checkbox" />
           </label>
+        </div>
+        <div class="settings-group">
+          <button class="setting-link" type="button"><span class="setting-icon" aria-hidden="true"><svg><use href="#icon-user"></use></svg></span><span>关于我们</span><b>›</b></button>
+          <button class="setting-link" type="button"><span class="setting-icon" aria-hidden="true"><svg><use href="#icon-message"></use></svg></span><span>意见反馈</span><b>›</b></button>
         </div>
       </section>
 
-      <section class="card-area">
-        <button class="word-card" id="cardButton" type="button" aria-label="点击显示中文">
-          <span class="word-type-badge" id="wordTypeBadge">新词</span>
-          <span class="card-hint" id="cardHint">点击显示中文</span>
-          <span class="word" id="wordText">မင်္ဂလာပါ</span>
-          <span class="phonetic" id="phoneticText"></span>
-          <span class="meaning hidden" id="meaningText"></span>
-          <span class="example hidden" id="exampleText"></span>
-          <span class="example-cn hidden" id="exampleCnText"></span>
-          <span class="example-tools hidden" id="exampleTools">
-            <span class="mini-speak" id="speakExampleButton" role="button" tabindex="0">朗读例句</span>
-          </span>
-        </button>
-      </section>
-
-      <section class="actions" aria-label="学习操作">
-        <button class="secondary" id="unknownButton" type="button">不认识</button>
-        <button class="speak" id="speakButton" type="button" aria-label="朗读单词" title="朗读">🔊</button>
-        <button class="primary" id="knownButton" type="button">认识</button>
-      </section>
-      <p class="audio-status" id="audioStatus" aria-live="polite"></p>
-
-      <section class="test-panel hidden" id="testPanel" aria-live="polite">
+      <section class="test-panel view hidden" id="testPanel" aria-live="polite">
         <div class="test-head">
           <div>
             <p class="eyebrow" id="testTitleText">小测</p>
@@ -761,7 +1383,7 @@ button:disabled {
         <p class="test-feedback" id="testFeedback"></p>
       </section>
 
-      <section class="story-panel hidden" id="storyPanel" aria-live="polite">
+      <section class="story-panel view hidden" id="storyPanel" aria-live="polite">
         <div class="test-head">
           <div>
             <p class="eyebrow">听力短句练习</p>
@@ -787,6 +1409,25 @@ button:disabled {
         </div>
         <p class="test-feedback" id="storyStatus">逐句听，听不懂就重听</p>
       </section>
+
+      <nav class="bottom-nav" id="bottomNav" aria-label="主导航">
+        <button class="active" id="navHomeButton" type="button">
+          <span aria-hidden="true"><svg><use href="#icon-home"></use></svg></span>
+          <b>首页</b>
+        </button>
+        <button id="navStudyButton" type="button">
+          <span aria-hidden="true"><svg><use href="#icon-book"></use></svg></span>
+          <b>学习</b>
+        </button>
+        <button id="navListeningButton" type="button">
+          <span aria-hidden="true"><svg><use href="#icon-headphones"></use></svg></span>
+          <b>听力</b>
+        </button>
+        <button id="navSettingsButton" type="button">
+          <span aria-hidden="true"><svg><use href="#icon-settings"></use></svg></span>
+          <b>设置</b>
+        </button>
+      </nav>
     </main>
 
     <script>
@@ -1393,8 +2034,19 @@ var DEFAULT_SETTINGS = {
 };
 
 var els = {
+  homeView: document.querySelector("#homeView"),
+  studyView: document.querySelector("#studyView"),
   homeTopbar: document.querySelector("#homeTopbar"),
   todayTitle: document.querySelector("#todayTitle"),
+  homeProgressText: document.querySelector("#homeProgressText"),
+  homeNewCountText: document.querySelector("#homeNewCountText"),
+  homeReviewCountText: document.querySelector("#homeReviewCountText"),
+  dailyProgressFill: document.querySelector("#dailyProgressFill"),
+  totalProgressFill: document.querySelector("#totalProgressFill"),
+  studyProgressFill: document.querySelector("#studyProgressFill"),
+  startStudyButton: document.querySelector("#startStudyButton"),
+  adjustPlanButton: document.querySelector("#adjustPlanButton"),
+  studyBackButton: document.querySelector("#studyBackButton"),
   progressText: document.querySelector("#progressText"),
   progressLabel: document.querySelector("#progressLabel"),
   streakText: document.querySelector("#streakText"),
@@ -1402,6 +2054,7 @@ var els = {
   learnedTotalText: document.querySelector("#learnedTotalText"),
   todayMixText: document.querySelector("#todayMixText"),
   cardButton: document.querySelector("#cardButton"),
+  cardSpeakButton: document.querySelector("#cardSpeakButton"),
   cardHint: document.querySelector("#cardHint"),
   wordTypeBadge: document.querySelector("#wordTypeBadge"),
   wordText: document.querySelector("#wordText"),
@@ -1425,6 +2078,7 @@ var els = {
   weeklyReviewSummary: document.querySelector("#weeklyReviewSummary"),
   weeklyReviewButton: document.querySelector("#weeklyReviewButton"),
   weakReviewButton: document.querySelector("#weakReviewButton"),
+  homeMistakeButton: document.querySelector("#homeMistakeButton"),
   settingsButton: document.querySelector("#settingsButton"),
   settingsPanel: document.querySelector("#settingsPanel"),
   closeSettingsButton: document.querySelector("#closeSettingsButton"),
@@ -1459,7 +2113,12 @@ var els = {
   storyPrevButton: document.querySelector("#storyPrevButton"),
   storyNextButton: document.querySelector("#storyNextButton"),
   storyShowCnButton: document.querySelector("#storyShowCnButton"),
-  closeStoryButton: document.querySelector("#closeStoryButton")
+  closeStoryButton: document.querySelector("#closeStoryButton"),
+  bottomNav: document.querySelector("#bottomNav"),
+  navHomeButton: document.querySelector("#navHomeButton"),
+  navStudyButton: document.querySelector("#navStudyButton"),
+  navListeningButton: document.querySelector("#navListeningButton"),
+  navSettingsButton: document.querySelector("#navSettingsButton")
 };
 
 if (window.EXTRA_WORDS && window.EXTRA_WORDS.length) {
@@ -1471,6 +2130,7 @@ var state = loadState();
 var flipped = false;
 var reviewSession = state.activeReview && state.activeReview.ids && state.activeReview.ids.length ? state.activeReview : null;
 var reviewMode = !!reviewSession;
+var currentView = reviewMode ? "study" : "home";
 var session = reviewMode ? mapIdsToWords(reviewSession.ids) : buildSession();
 var index = reviewMode ? firstReviewUnansweredIndex() : firstUnansweredIndex();
 var lastAutoSpokenKey = "";
@@ -1487,9 +2147,28 @@ render();
 registerServiceWorker();
 
 function bindEvents() {
+  els.startStudyButton.addEventListener("click", startStudyEntry);
+  els.adjustPlanButton.addEventListener("click", openSettingsView);
+  els.studyBackButton.addEventListener("click", closeStudyPanel);
+  els.navHomeButton.addEventListener("click", openHomeView);
+  els.navStudyButton.addEventListener("click", startStudyEntry);
+  els.navListeningButton.addEventListener("click", openStoryPractice);
+  els.navSettingsButton.addEventListener("click", openSettingsView);
+  els.homeMistakeButton.addEventListener("click", reviewMistakes);
   els.cardButton.addEventListener("click", function () {
     flipped = !flipped;
     renderCard();
+  });
+  els.cardButton.addEventListener("keydown", function (event) {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      flipped = !flipped;
+      renderCard();
+    }
+  });
+  els.cardSpeakButton.addEventListener("click", function (event) {
+    event.stopPropagation();
+    speakCurrentWord();
   });
   els.knownButton.addEventListener("click", function () { answer(true); });
   els.unknownButton.addEventListener("click", function () { answer(false); });
@@ -1577,6 +2256,74 @@ function loadState() {
 
 function saveState() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+}
+
+function startStudyEntry() {
+  var day = state.days[today];
+  if (day && day.completed && !reviewMode) {
+    reviewTodayWords();
+    return;
+  }
+  openStudyView();
+}
+
+function openStudyView() {
+  settingsOpen = false;
+  currentView = "study";
+  pushPanelHistory("study");
+  render();
+  scrollToTop();
+}
+
+function closeStudyView(fromHistory) {
+  if (!fromHistory && activePanel === "study" && panelHistoryActive && window.history && window.history.back) {
+    window.history.back();
+    return;
+  }
+  closeStudyPanel();
+}
+
+function closeStudyPanel() {
+  if (reviewMode) {
+    cancelReview();
+    return;
+  }
+  currentView = "home";
+  clearPanelHistory("study");
+  render();
+  scrollToTop();
+}
+
+function openHomeView() {
+  pauseCurrentAudio();
+  if (test.active) closeTestPanel();
+  if (storyState.active) closeStoryPanel();
+  if (settingsOpen) closeSettingsPanel();
+  if (reviewMode) {
+    cancelReview();
+    return;
+  }
+  currentView = "home";
+  clearPanelHistory("study");
+  render();
+  scrollToTop();
+}
+
+function openSettingsView() {
+  pauseCurrentAudio();
+  if (test.active) closeTestPanel();
+  if (storyState.active) closeStoryPanel();
+  settingsOpen = true;
+  currentView = "settings";
+  pushPanelHistory("settings");
+  render();
+  scrollToTop();
+}
+
+function scrollToTop() {
+  window.requestAnimationFrame(function () {
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+  });
 }
 
 function buildSession() {
@@ -1669,21 +2416,37 @@ function render() {
 }
 
 function renderMode() {
-  var panelOpen = test.active || storyState.active || settingsOpen;
+  var testOpen = test.active;
+  var storyOpen = storyState.active;
   var day = state.days[today];
   var dailyDone = !!(day && day.completed);
-  toggleHidden(els.homeTopbar, panelOpen);
-  toggleHidden(document.querySelector(".stats"), panelOpen);
-  toggleHidden(els.learningOverview, panelOpen || reviewMode);
-  toggleHidden(els.weeklyReviewPanel, panelOpen || reviewMode || (!isWeeklyReviewDue() && !isTestDue()));
-  toggleHidden(els.donePanel, panelOpen || reviewMode || !dailyDone);
-  toggleHidden(document.querySelector(".test-actions"), panelOpen || reviewMode);
-  toggleHidden(document.querySelector(".card-area"), panelOpen || (dailyDone && !reviewMode));
-  toggleHidden(document.querySelector(".actions"), panelOpen || (dailyDone && !reviewMode));
-  toggleHidden(els.audioStatus, panelOpen || (dailyDone && !reviewMode));
+  var homeVisible = !testOpen && !storyOpen && !settingsOpen && !reviewMode && currentView === "home";
+  var studyVisible = !testOpen && !storyOpen && !settingsOpen && (reviewMode || currentView === "study");
+  var bottomVisible = !testOpen && !storyOpen && !studyVisible;
+
+  toggleHidden(els.homeView, !homeVisible);
+  if (els.homeView) els.homeView.classList.toggle("day-complete", dailyDone);
+  toggleHidden(els.studyView, !studyVisible);
+  toggleHidden(els.weeklyReviewPanel, !homeVisible || (!isWeeklyReviewDue() && !isTestDue()));
+  toggleHidden(els.donePanel, !homeVisible || !dailyDone);
+  toggleHidden(document.querySelector(".test-actions"), !homeVisible);
+  toggleHidden(document.querySelector(".card-area"), !studyVisible || (dailyDone && !reviewMode));
+  toggleHidden(document.querySelector(".actions"), !studyVisible || (dailyDone && !reviewMode));
+  toggleHidden(els.audioStatus, !studyVisible || (dailyDone && !reviewMode));
   toggleHidden(els.settingsPanel, !settingsOpen);
   toggleHidden(els.testPanel, !test.active);
   toggleHidden(els.storyPanel, !storyState.active);
+  toggleHidden(els.bottomNav, !bottomVisible);
+  renderNav();
+}
+
+function renderNav() {
+  if (!els.bottomNav) return;
+  var active = settingsOpen ? "settings" : currentView;
+  els.navHomeButton.classList.toggle("active", active === "home");
+  els.navStudyButton.classList.toggle("active", active === "study");
+  els.navListeningButton.classList.toggle("active", active === "listening");
+  els.navSettingsButton.classList.toggle("active", active === "settings");
 }
 
 function renderSettings() {
@@ -1704,6 +2467,9 @@ function renderCard() {
   var answeredCount = Object.keys(answers).length;
   var progressCount = reviewMode ? index : Math.min(answeredCount, session.length);
   els.progressText.textContent = String(progressCount) + " / " + String(session.length);
+  if (els.studyProgressFill) {
+    els.studyProgressFill.style.width = session.length ? String(Math.min(progressCount / session.length, 1) * 100) + "%" : "0%";
+  }
   if (els.progressLabel) els.progressLabel.textContent = reviewMode ? getReviewLabel() : "今日进度";
 
   if (!current || (day && day.completed && !reviewMode)) {
@@ -1762,6 +2528,7 @@ function answer(isKnown) {
       return;
     }
     state.days[today].completed = true;
+    currentView = "home";
   }
   saveState();
   render();
@@ -1794,10 +2561,12 @@ function startChoiceTest(pool, listening, title) {
   pauseStoryAudio();
   closeStoryPanel();
   closeSettingsPanel();
+  currentView = listening ? "listening" : "home";
   test = { active: true, listening: listening, showWord: !listening, title: title, questions: [], index: 0, score: 0, answered: false };
   pushPanelHistory("test");
   for (var i = 0; i < pool.length; i += 1) test.questions.push(makeQuestion(pool[i]));
   render();
+  scrollToTop();
 }
 
 function closeTest(fromHistory) {
@@ -1812,7 +2581,9 @@ function closeTestPanel() {
   pauseCurrentAudio();
   test.active = false;
   clearPanelHistory("test");
+  currentView = "home";
   render();
+  scrollToTop();
 }
 
 function openStoryPractice() {
@@ -1820,9 +2591,11 @@ function openStoryPractice() {
   pauseCurrentAudio();
   closeTestPanel();
   closeSettingsPanel();
+  currentView = "listening";
   storyState = { active: true, storyIndex: 0, lineIndex: 0, showCn: false, playing: false, audio: null, playState: "idle" };
   pushPanelHistory("story");
   render();
+  scrollToTop();
   playStoryLine(true, 1);
 }
 
@@ -1838,7 +2611,9 @@ function closeStoryPanel() {
   pauseStoryAudio();
   storyState.active = false;
   clearPanelHistory("story");
+  currentView = "home";
   render();
+  scrollToTop();
 }
 
 function pushPanelHistory(panel) {
@@ -1874,6 +2649,10 @@ function handleBrowserBack() {
   }
   if (settingsOpen) {
     closeSettings(true);
+    return;
+  }
+  if (currentView === "study") {
+    closeStudyView(true);
     return;
   }
   if (reviewMode) {
@@ -1919,10 +2698,7 @@ function toggleSettings() {
     closeSettings(false);
     return;
   }
-  settingsOpen = true;
-  pauseCurrentAudio();
-  pushPanelHistory("settings");
-  render();
+  openSettingsView();
 }
 
 function closeSettings(fromHistory) {
@@ -1936,6 +2712,7 @@ function closeSettings(fromHistory) {
 function closeSettingsPanel() {
   settingsOpen = false;
   clearPanelHistory("settings");
+  currentView = "home";
   render();
 }
 
@@ -2173,14 +2950,27 @@ function renderLearningOverview() {
   var category = state.settings.category || DEFAULT_SETTINGS.category;
   var pool = getSelectedWords();
   var learned = countLearnedWords(pool);
-  els.learnedTotalText.textContent = category === "all"
-    ? "总进度 " + learned + " / " + WORDS.length
-    : "场景进度 " + learned + " / " + pool.length;
+  var totalTarget = category === "all" ? WORDS.length : pool.length;
+  els.learnedTotalText.textContent = learned + " / " + totalTarget;
+  if (els.totalProgressFill) {
+    els.totalProgressFill.style.width = totalTarget ? String(Math.min(learned / totalTarget, 1) * 100) + "%" : "0%";
+  }
 
   var mix = getTodayMixStats();
-  els.todayMixText.textContent = mix.hasSources
-    ? "今日：新词 " + mix.newCount + "，复习 " + mix.reviewCount
-    : "今日词汇 " + mix.total + " 个";
+  els.todayMixText.textContent = "今日词汇 " + mix.total + " 个";
+  if (els.homeNewCountText) els.homeNewCountText.textContent = "新词 " + mix.newCount;
+  if (els.homeReviewCountText) els.homeReviewCountText.textContent = "复习 " + mix.reviewCount;
+
+  var day = state.days[today];
+  var answers = day && day.answers ? day.answers : {};
+  var answered = Math.min(Object.keys(answers).length, session.length);
+  if (els.homeProgressText) els.homeProgressText.textContent = answered + " / " + session.length;
+  if (els.dailyProgressFill) {
+    els.dailyProgressFill.style.width = session.length ? String(Math.min(answered / session.length, 1) * 100) + "%" : "0%";
+  }
+  if (els.startStudyButton) {
+    els.startStudyButton.textContent = day && day.completed ? "今天再复习" : answered ? "继续学习" : "开始学习";
+  }
 }
 
 function countLearnedWords(words) {
@@ -2495,6 +3285,7 @@ function startReview(ids, type, options) {
   state.activeReview = reviewSession;
   index = 0;
   flipped = false;
+  currentView = "study";
   saveState();
   pushPanelHistory("review");
   render();
@@ -2514,6 +3305,7 @@ function finishReview() {
   index = firstUnansweredIndex();
   flipped = false;
   learningAutoSpeakArmed = false;
+  currentView = "home";
   clearPanelHistory("review");
   saveState();
 }
@@ -2527,6 +3319,7 @@ function cancelReview() {
   index = firstUnansweredIndex();
   flipped = false;
   learningAutoSpeakArmed = false;
+  currentView = "home";
   clearPanelHistory("review");
   saveState();
   render();
@@ -2690,9 +3483,19 @@ function registerServiceWorker() {
     navigator.serviceWorker.register("sw.js").catch(function () {});
   }
 }
+
     </script>
   </body>
 </html>
+
+
+
+
+
+
+
+
+
 
 
 

@@ -11,8 +11,19 @@ var DEFAULT_SETTINGS = {
 };
 
 var els = {
+  homeView: document.querySelector("#homeView"),
+  studyView: document.querySelector("#studyView"),
   homeTopbar: document.querySelector("#homeTopbar"),
   todayTitle: document.querySelector("#todayTitle"),
+  homeProgressText: document.querySelector("#homeProgressText"),
+  homeNewCountText: document.querySelector("#homeNewCountText"),
+  homeReviewCountText: document.querySelector("#homeReviewCountText"),
+  dailyProgressFill: document.querySelector("#dailyProgressFill"),
+  totalProgressFill: document.querySelector("#totalProgressFill"),
+  studyProgressFill: document.querySelector("#studyProgressFill"),
+  startStudyButton: document.querySelector("#startStudyButton"),
+  adjustPlanButton: document.querySelector("#adjustPlanButton"),
+  studyBackButton: document.querySelector("#studyBackButton"),
   progressText: document.querySelector("#progressText"),
   progressLabel: document.querySelector("#progressLabel"),
   streakText: document.querySelector("#streakText"),
@@ -20,6 +31,7 @@ var els = {
   learnedTotalText: document.querySelector("#learnedTotalText"),
   todayMixText: document.querySelector("#todayMixText"),
   cardButton: document.querySelector("#cardButton"),
+  cardSpeakButton: document.querySelector("#cardSpeakButton"),
   cardHint: document.querySelector("#cardHint"),
   wordTypeBadge: document.querySelector("#wordTypeBadge"),
   wordText: document.querySelector("#wordText"),
@@ -43,6 +55,7 @@ var els = {
   weeklyReviewSummary: document.querySelector("#weeklyReviewSummary"),
   weeklyReviewButton: document.querySelector("#weeklyReviewButton"),
   weakReviewButton: document.querySelector("#weakReviewButton"),
+  homeMistakeButton: document.querySelector("#homeMistakeButton"),
   settingsButton: document.querySelector("#settingsButton"),
   settingsPanel: document.querySelector("#settingsPanel"),
   closeSettingsButton: document.querySelector("#closeSettingsButton"),
@@ -77,7 +90,12 @@ var els = {
   storyPrevButton: document.querySelector("#storyPrevButton"),
   storyNextButton: document.querySelector("#storyNextButton"),
   storyShowCnButton: document.querySelector("#storyShowCnButton"),
-  closeStoryButton: document.querySelector("#closeStoryButton")
+  closeStoryButton: document.querySelector("#closeStoryButton"),
+  bottomNav: document.querySelector("#bottomNav"),
+  navHomeButton: document.querySelector("#navHomeButton"),
+  navStudyButton: document.querySelector("#navStudyButton"),
+  navListeningButton: document.querySelector("#navListeningButton"),
+  navSettingsButton: document.querySelector("#navSettingsButton")
 };
 
 if (window.EXTRA_WORDS && window.EXTRA_WORDS.length) {
@@ -89,6 +107,7 @@ var state = loadState();
 var flipped = false;
 var reviewSession = state.activeReview && state.activeReview.ids && state.activeReview.ids.length ? state.activeReview : null;
 var reviewMode = !!reviewSession;
+var currentView = reviewMode ? "study" : "home";
 var session = reviewMode ? mapIdsToWords(reviewSession.ids) : buildSession();
 var index = reviewMode ? firstReviewUnansweredIndex() : firstUnansweredIndex();
 var lastAutoSpokenKey = "";
@@ -105,9 +124,28 @@ render();
 registerServiceWorker();
 
 function bindEvents() {
+  els.startStudyButton.addEventListener("click", startStudyEntry);
+  els.adjustPlanButton.addEventListener("click", openSettingsView);
+  els.studyBackButton.addEventListener("click", closeStudyPanel);
+  els.navHomeButton.addEventListener("click", openHomeView);
+  els.navStudyButton.addEventListener("click", startStudyEntry);
+  els.navListeningButton.addEventListener("click", openStoryPractice);
+  els.navSettingsButton.addEventListener("click", openSettingsView);
+  els.homeMistakeButton.addEventListener("click", reviewMistakes);
   els.cardButton.addEventListener("click", function () {
     flipped = !flipped;
     renderCard();
+  });
+  els.cardButton.addEventListener("keydown", function (event) {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      flipped = !flipped;
+      renderCard();
+    }
+  });
+  els.cardSpeakButton.addEventListener("click", function (event) {
+    event.stopPropagation();
+    speakCurrentWord();
   });
   els.knownButton.addEventListener("click", function () { answer(true); });
   els.unknownButton.addEventListener("click", function () { answer(false); });
@@ -195,6 +233,74 @@ function loadState() {
 
 function saveState() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+}
+
+function startStudyEntry() {
+  var day = state.days[today];
+  if (day && day.completed && !reviewMode) {
+    reviewTodayWords();
+    return;
+  }
+  openStudyView();
+}
+
+function openStudyView() {
+  settingsOpen = false;
+  currentView = "study";
+  pushPanelHistory("study");
+  render();
+  scrollToTop();
+}
+
+function closeStudyView(fromHistory) {
+  if (!fromHistory && activePanel === "study" && panelHistoryActive && window.history && window.history.back) {
+    window.history.back();
+    return;
+  }
+  closeStudyPanel();
+}
+
+function closeStudyPanel() {
+  if (reviewMode) {
+    cancelReview();
+    return;
+  }
+  currentView = "home";
+  clearPanelHistory("study");
+  render();
+  scrollToTop();
+}
+
+function openHomeView() {
+  pauseCurrentAudio();
+  if (test.active) closeTestPanel();
+  if (storyState.active) closeStoryPanel();
+  if (settingsOpen) closeSettingsPanel();
+  if (reviewMode) {
+    cancelReview();
+    return;
+  }
+  currentView = "home";
+  clearPanelHistory("study");
+  render();
+  scrollToTop();
+}
+
+function openSettingsView() {
+  pauseCurrentAudio();
+  if (test.active) closeTestPanel();
+  if (storyState.active) closeStoryPanel();
+  settingsOpen = true;
+  currentView = "settings";
+  pushPanelHistory("settings");
+  render();
+  scrollToTop();
+}
+
+function scrollToTop() {
+  window.requestAnimationFrame(function () {
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+  });
 }
 
 function buildSession() {
@@ -287,21 +393,37 @@ function render() {
 }
 
 function renderMode() {
-  var panelOpen = test.active || storyState.active || settingsOpen;
+  var testOpen = test.active;
+  var storyOpen = storyState.active;
   var day = state.days[today];
   var dailyDone = !!(day && day.completed);
-  toggleHidden(els.homeTopbar, panelOpen);
-  toggleHidden(document.querySelector(".stats"), panelOpen);
-  toggleHidden(els.learningOverview, panelOpen || reviewMode);
-  toggleHidden(els.weeklyReviewPanel, panelOpen || reviewMode || (!isWeeklyReviewDue() && !isTestDue()));
-  toggleHidden(els.donePanel, panelOpen || reviewMode || !dailyDone);
-  toggleHidden(document.querySelector(".test-actions"), panelOpen || reviewMode);
-  toggleHidden(document.querySelector(".card-area"), panelOpen || (dailyDone && !reviewMode));
-  toggleHidden(document.querySelector(".actions"), panelOpen || (dailyDone && !reviewMode));
-  toggleHidden(els.audioStatus, panelOpen || (dailyDone && !reviewMode));
+  var homeVisible = !testOpen && !storyOpen && !settingsOpen && !reviewMode && currentView === "home";
+  var studyVisible = !testOpen && !storyOpen && !settingsOpen && (reviewMode || currentView === "study");
+  var bottomVisible = !testOpen && !storyOpen && !studyVisible;
+
+  toggleHidden(els.homeView, !homeVisible);
+  if (els.homeView) els.homeView.classList.toggle("day-complete", dailyDone);
+  toggleHidden(els.studyView, !studyVisible);
+  toggleHidden(els.weeklyReviewPanel, !homeVisible || (!isWeeklyReviewDue() && !isTestDue()));
+  toggleHidden(els.donePanel, !homeVisible || !dailyDone);
+  toggleHidden(document.querySelector(".test-actions"), !homeVisible);
+  toggleHidden(document.querySelector(".card-area"), !studyVisible || (dailyDone && !reviewMode));
+  toggleHidden(document.querySelector(".actions"), !studyVisible || (dailyDone && !reviewMode));
+  toggleHidden(els.audioStatus, !studyVisible || (dailyDone && !reviewMode));
   toggleHidden(els.settingsPanel, !settingsOpen);
   toggleHidden(els.testPanel, !test.active);
   toggleHidden(els.storyPanel, !storyState.active);
+  toggleHidden(els.bottomNav, !bottomVisible);
+  renderNav();
+}
+
+function renderNav() {
+  if (!els.bottomNav) return;
+  var active = settingsOpen ? "settings" : currentView;
+  els.navHomeButton.classList.toggle("active", active === "home");
+  els.navStudyButton.classList.toggle("active", active === "study");
+  els.navListeningButton.classList.toggle("active", active === "listening");
+  els.navSettingsButton.classList.toggle("active", active === "settings");
 }
 
 function renderSettings() {
@@ -322,6 +444,9 @@ function renderCard() {
   var answeredCount = Object.keys(answers).length;
   var progressCount = reviewMode ? index : Math.min(answeredCount, session.length);
   els.progressText.textContent = String(progressCount) + " / " + String(session.length);
+  if (els.studyProgressFill) {
+    els.studyProgressFill.style.width = session.length ? String(Math.min(progressCount / session.length, 1) * 100) + "%" : "0%";
+  }
   if (els.progressLabel) els.progressLabel.textContent = reviewMode ? getReviewLabel() : "今日进度";
 
   if (!current || (day && day.completed && !reviewMode)) {
@@ -380,6 +505,7 @@ function answer(isKnown) {
       return;
     }
     state.days[today].completed = true;
+    currentView = "home";
   }
   saveState();
   render();
@@ -412,10 +538,12 @@ function startChoiceTest(pool, listening, title) {
   pauseStoryAudio();
   closeStoryPanel();
   closeSettingsPanel();
+  currentView = listening ? "listening" : "home";
   test = { active: true, listening: listening, showWord: !listening, title: title, questions: [], index: 0, score: 0, answered: false };
   pushPanelHistory("test");
   for (var i = 0; i < pool.length; i += 1) test.questions.push(makeQuestion(pool[i]));
   render();
+  scrollToTop();
 }
 
 function closeTest(fromHistory) {
@@ -430,7 +558,9 @@ function closeTestPanel() {
   pauseCurrentAudio();
   test.active = false;
   clearPanelHistory("test");
+  currentView = "home";
   render();
+  scrollToTop();
 }
 
 function openStoryPractice() {
@@ -438,9 +568,11 @@ function openStoryPractice() {
   pauseCurrentAudio();
   closeTestPanel();
   closeSettingsPanel();
+  currentView = "listening";
   storyState = { active: true, storyIndex: 0, lineIndex: 0, showCn: false, playing: false, audio: null, playState: "idle" };
   pushPanelHistory("story");
   render();
+  scrollToTop();
   playStoryLine(true, 1);
 }
 
@@ -456,7 +588,9 @@ function closeStoryPanel() {
   pauseStoryAudio();
   storyState.active = false;
   clearPanelHistory("story");
+  currentView = "home";
   render();
+  scrollToTop();
 }
 
 function pushPanelHistory(panel) {
@@ -492,6 +626,10 @@ function handleBrowserBack() {
   }
   if (settingsOpen) {
     closeSettings(true);
+    return;
+  }
+  if (currentView === "study") {
+    closeStudyView(true);
     return;
   }
   if (reviewMode) {
@@ -537,10 +675,7 @@ function toggleSettings() {
     closeSettings(false);
     return;
   }
-  settingsOpen = true;
-  pauseCurrentAudio();
-  pushPanelHistory("settings");
-  render();
+  openSettingsView();
 }
 
 function closeSettings(fromHistory) {
@@ -554,6 +689,7 @@ function closeSettings(fromHistory) {
 function closeSettingsPanel() {
   settingsOpen = false;
   clearPanelHistory("settings");
+  currentView = "home";
   render();
 }
 
@@ -791,14 +927,27 @@ function renderLearningOverview() {
   var category = state.settings.category || DEFAULT_SETTINGS.category;
   var pool = getSelectedWords();
   var learned = countLearnedWords(pool);
-  els.learnedTotalText.textContent = category === "all"
-    ? "总进度 " + learned + " / " + WORDS.length
-    : "场景进度 " + learned + " / " + pool.length;
+  var totalTarget = category === "all" ? WORDS.length : pool.length;
+  els.learnedTotalText.textContent = learned + " / " + totalTarget;
+  if (els.totalProgressFill) {
+    els.totalProgressFill.style.width = totalTarget ? String(Math.min(learned / totalTarget, 1) * 100) + "%" : "0%";
+  }
 
   var mix = getTodayMixStats();
-  els.todayMixText.textContent = mix.hasSources
-    ? "今日：新词 " + mix.newCount + "，复习 " + mix.reviewCount
-    : "今日词汇 " + mix.total + " 个";
+  els.todayMixText.textContent = "今日词汇 " + mix.total + " 个";
+  if (els.homeNewCountText) els.homeNewCountText.textContent = "新词 " + mix.newCount;
+  if (els.homeReviewCountText) els.homeReviewCountText.textContent = "复习 " + mix.reviewCount;
+
+  var day = state.days[today];
+  var answers = day && day.answers ? day.answers : {};
+  var answered = Math.min(Object.keys(answers).length, session.length);
+  if (els.homeProgressText) els.homeProgressText.textContent = answered + " / " + session.length;
+  if (els.dailyProgressFill) {
+    els.dailyProgressFill.style.width = session.length ? String(Math.min(answered / session.length, 1) * 100) + "%" : "0%";
+  }
+  if (els.startStudyButton) {
+    els.startStudyButton.textContent = day && day.completed ? "今天再复习" : answered ? "继续学习" : "开始学习";
+  }
 }
 
 function countLearnedWords(words) {
@@ -1113,6 +1262,7 @@ function startReview(ids, type, options) {
   state.activeReview = reviewSession;
   index = 0;
   flipped = false;
+  currentView = "study";
   saveState();
   pushPanelHistory("review");
   render();
@@ -1132,6 +1282,7 @@ function finishReview() {
   index = firstUnansweredIndex();
   flipped = false;
   learningAutoSpeakArmed = false;
+  currentView = "home";
   clearPanelHistory("review");
   saveState();
 }
@@ -1145,6 +1296,7 @@ function cancelReview() {
   index = firstUnansweredIndex();
   flipped = false;
   learningAutoSpeakArmed = false;
+  currentView = "home";
   clearPanelHistory("review");
   saveState();
   render();
