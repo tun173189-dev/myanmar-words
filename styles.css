@@ -323,12 +323,12 @@ p {
 .stat-card {
   min-height: 82px;
   display: grid;
-  grid-template-columns: 38px 1fr;
+  grid-template-columns: 42px minmax(0, 1fr);
   align-items: center;
-  column-gap: 10px;
+  column-gap: 8px;
   row-gap: 2px;
   align-content: center;
-  padding: 13px;
+  padding: 12px;
   border-radius: 16px;
 }
 
@@ -380,6 +380,7 @@ p {
   color: #3b4652;
   font-size: 13px;
   font-weight: 750;
+  white-space: nowrap;
 }
 
 .stat-card strong {
@@ -387,9 +388,10 @@ p {
   display: block;
   margin-top: 0;
   color: #0d1d29;
-  font-size: 21px;
+  font-size: 20px;
   line-height: 1.1;
   font-weight: 850;
+  white-space: nowrap;
 }
 
 #learnedTotalText {
@@ -545,14 +547,9 @@ p {
   grid-template-columns: 1fr 1fr;
 }
 
-.done-actions .primary:first-child,
-.done-actions .quiet-status {
-  grid-column: 1 / -1;
-}
-
 .quiet-status:disabled {
-  min-height: 38px;
-  background: transparent;
+  min-height: 52px;
+  background: rgba(255, 255, 255, 0.78);
   border: 1px solid var(--color-border);
   color: var(--color-text-muted);
   box-shadow: none;

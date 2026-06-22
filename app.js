@@ -113,7 +113,7 @@ var index = reviewMode ? firstReviewUnansweredIndex() : firstUnansweredIndex();
 var lastAutoSpokenKey = "";
 var learningAutoSpeakArmed = false;
 var settingsOpen = false;
-var test = { active: false, listening: false, showWord: true, title: "小测", questions: [], index: 0, score: 0, answered: false };
+var test = { active: false, listening: false, showWord: true, title: "小测", questions: [], index: 0, score: 0, answered: false, completed: false, kind: "test" };
 var storyState = { active: false, storyIndex: 0, lineIndex: 0, showCn: false, playing: false, audio: null, playState: "idle" };
 var panelHistoryActive = false;
 var activePanel = "";
@@ -158,7 +158,7 @@ function bindEvents() {
     }
   });
   els.reviewAgainButton.addEventListener("click", reviewMistakes);
-  els.reviewTodayButton.addEventListener("click", reviewTodayWords);
+  if (els.reviewTodayButton) els.reviewTodayButton.addEventListener("click", reviewTodayWords);
   els.listenTodayButton.addEventListener("click", startTodayListeningReview);
   els.weeklyReviewButton.addEventListener("click", startWeeklyReview);
   els.weakReviewButton.addEventListener("click", reviewWeakWords);
@@ -178,7 +178,7 @@ function bindEvents() {
   els.showTestWordButton.addEventListener("click", showListeningWord);
   els.closeStoryButton.addEventListener("click", closeStoryPractice);
   els.storyPlayButton.addEventListener("click", toggleStoryPlay);
-  els.storyReplayButton.addEventListener("click", replayStoryLine);
+  if (els.storyReplayButton) els.storyReplayButton.addEventListener("click", replayStoryLine);
   els.storySlowButton.addEventListener("click", playStoryLineSlow);
   els.storyPrevButton.addEventListener("click", previousStoryLine);
   els.storyNextButton.addEventListener("click", nextStoryLine);
@@ -238,7 +238,7 @@ function saveState() {
 function startStudyEntry() {
   var day = state.days[today];
   if (day && day.completed && !reviewMode) {
-    reviewTodayWords();
+    openHomeView();
     return;
   }
   openStudyView();
@@ -464,6 +464,7 @@ function renderCard() {
       els.reviewAgainButton.disabled = !wrongIds.length;
       els.reviewAgainButton.classList.toggle("quiet-status", !wrongIds.length);
     }
+    if (els.reviewTodayButton) toggleHidden(els.reviewTodayButton, true);
     return;
   }
 
@@ -524,26 +525,26 @@ function updateRecord(word, isKnown) {
 
 function startTest() {
   closeSettingsPanel();
-  startChoiceTest(getTestPool(), false, "本周小测");
+  startChoiceTest(getTestPool(), false, "本周小测", "weekly");
 }
 
 function startListeningTest() {
   closeSettingsPanel();
-  startChoiceTest(getTestPool(), true, "听力小测");
+  startChoiceTest(getComprehensiveListeningPool(), true, "综合听力小测", "listening");
 }
 
 function startTodayListeningReview() {
   closeSettingsPanel();
-  startChoiceTest(mapIdsToWords(getTodayIds()), true, "今天测试");
+  startChoiceTest(mapIdsToWords(getTodayIds()), true, "今天测试", "today");
 }
 
-function startChoiceTest(pool, listening, title) {
+function startChoiceTest(pool, listening, title, kind) {
   if (!pool.length) return;
   pauseStoryAudio();
   closeStoryPanel();
   closeSettingsPanel();
   currentView = listening ? "listening" : "home";
-  test = { active: true, listening: listening, showWord: !listening, title: title, questions: [], index: 0, score: 0, answered: false };
+  test = { active: true, listening: listening, showWord: !listening, title: title, questions: [], index: 0, score: 0, answered: false, completed: false, kind: kind || "test" };
   pushPanelHistory("test");
   for (var i = 0; i < pool.length; i += 1) test.questions.push(makeQuestion(pool[i]));
   render();
@@ -561,6 +562,7 @@ function closeTest(fromHistory) {
 function closeTestPanel() {
   pauseCurrentAudio();
   test.active = false;
+  test.completed = false;
   clearPanelHistory("test");
   currentView = "home";
   render();
@@ -662,6 +664,24 @@ function getTestPool() {
   return candidates.slice(0, TEST_COUNT);
 }
 
+function getComprehensiveListeningPool() {
+  var studied = [];
+  var wordPool = getSelectedWords();
+  for (var i = 0; i < wordPool.length; i += 1) {
+    if (state.records[wordPool[i].id]) studied.push(wordPool[i]);
+  }
+  studied.sort(function (a, b) {
+    var recordA = state.records[a.id] || { level: 0, reviewAfter: "", lastSeen: "" };
+    var recordB = state.records[b.id] || { level: 0, reviewAfter: "", lastSeen: "" };
+    var dueA = recordA.reviewAfter && recordA.reviewAfter <= today ? 0 : 1;
+    var dueB = recordB.reviewAfter && recordB.reviewAfter <= today ? 0 : 1;
+    if (dueA !== dueB) return dueA - dueB;
+    if ((recordA.level || 0) !== (recordB.level || 0)) return (recordA.level || 0) - (recordB.level || 0);
+    return String(recordB.lastSeen || "").localeCompare(String(recordA.lastSeen || ""));
+  });
+  return studied.slice(0, TEST_COUNT);
+}
+
 function isTestDue() {
   var lastTest = state.tests[state.tests.length - 1];
   var lastTestDate = lastTest ? lastTest.date : "";
@@ -734,6 +754,10 @@ function makeQuestion(word) {
 
 function renderTest() {
   if (!test.active) return;
+  if (test.completed) {
+    renderTestComplete();
+    return;
+  }
   var question = test.questions[test.index];
   if (!question) {
     finishTest();
@@ -743,6 +767,7 @@ function renderTest() {
   els.testProgressText.textContent = String(test.index + 1) + " / " + String(test.questions.length);
   els.testWordText.textContent = test.listening && !test.showWord ? "听发音，选择正确意思" : question.word.word;
   els.speakTestButton.textContent = test.listening ? "再听一遍" : "朗读单词";
+  toggleHidden(els.speakTestButton, false);
   toggleHidden(els.showTestWordButton, !test.listening || test.showWord);
   if (!test.answered) els.testFeedback.textContent = "";
   els.choiceList.innerHTML = "";
@@ -865,7 +890,12 @@ function playStoryLine(restart, rate) {
       storyState.playing = false;
       storyState.audio = null;
       storyState.playState = "ended";
-      setStoryStatus("逐句听，听不懂就重听");
+      var story = getCurrentStory();
+      if (story && storyState.lineIndex >= story.lines.length - 1) {
+        setStoryStatus("本组短句听完了，可以换个场景或从第一句再听。");
+      } else {
+        setStoryStatus("逐句听，听不懂就重听");
+      }
       renderStory();
     }
   });
@@ -905,7 +935,7 @@ function pauseStoryAudio() {
   }
   storyState.playing = false;
   storyState.playState = "idle";
-  setStoryStatus("逐句听，听不懂就重听");
+  if (storyState.active) setStoryStatus("逐句听，听不懂就重听");
 }
 
 function renderStoryPlayButton() {
@@ -1031,16 +1061,49 @@ function answerTest(choiceId) {
 function finishTest() {
   state.tests.push({ date: today, score: test.score, total: test.questions.length });
   saveState();
+  test.completed = true;
+  renderTestComplete();
+}
+
+function renderTestComplete() {
   els.testProgressText.textContent = "完成";
+  if (els.testTitleText) els.testTitleText.textContent = test.title || "小测";
   els.testWordText.textContent = String(test.score) + " / " + String(test.questions.length);
+  toggleHidden(els.speakTestButton, true);
+  toggleHidden(els.showTestWordButton, true);
   els.choiceList.innerHTML = "";
-  els.testFeedback.textContent = test.score >= Math.ceil(test.questions.length * 0.8) ? "掌握得不错" : "错题会提前复习";
-  var button = document.createElement("button");
-  button.className = "primary full";
-  button.type = "button";
-  button.textContent = "回到今日单词";
-  button.addEventListener("click", closeTest);
-  els.choiceList.appendChild(button);
+  var passed = test.score >= Math.ceil(test.questions.length * 0.8);
+  els.testFeedback.textContent = passed ? "掌握得不错" : "错题会提前复习";
+  var againButton = document.createElement("button");
+  againButton.className = "secondary full";
+  againButton.type = "button";
+  againButton.textContent = "再测一次";
+  againButton.addEventListener("click", restartCurrentTest);
+  var closeButton = document.createElement("button");
+  closeButton.className = "primary full";
+  closeButton.type = "button";
+  closeButton.textContent = test.kind === "listening" ? "回到听力练习" : "回到首页";
+  closeButton.addEventListener("click", function () {
+    if (test.kind === "listening") {
+      closeTestPanel();
+      openStoryPractice();
+    } else {
+      closeTest(false);
+    }
+  });
+  els.choiceList.appendChild(closeButton);
+  els.choiceList.appendChild(againButton);
+}
+
+function restartCurrentTest() {
+  var kind = test.kind;
+  if (kind === "today") {
+    startTodayListeningReview();
+  } else if (kind === "listening") {
+    startListeningTest();
+  } else {
+    startTest();
+  }
 }
 
 function showListeningWord() {
