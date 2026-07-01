@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#f7f3ea" />
     <title>缅语记单词</title>
-    <link rel="manifest" href="manifest.webmanifest?v=38" />
+    <link rel="manifest" href="manifest.webmanifest?v=40" />
     <style>
 :root {
   color-scheme: light;
@@ -371,8 +371,8 @@ p {
 }
 
 .round-icon {
-  width: 36px;
-  height: 36px;
+  width: 34px;
+  height: 34px;
   grid-row: 1 / span 3;
   margin-bottom: 0;
   border-radius: 50%;
@@ -386,6 +386,7 @@ p {
 
 .stat-card p {
   grid-column: 2;
+  min-width: 0;
   color: #3b4652;
   font-size: 13px;
   font-weight: 750;
@@ -395,16 +396,17 @@ p {
 .stat-card strong {
   grid-column: 2;
   display: block;
+  min-width: 0;
   margin-top: 0;
   color: #0d1d29;
-  font-size: 20px;
+  font-size: clamp(18px, 5vw, 20px);
   line-height: 1.1;
   font-weight: 850;
   white-space: nowrap;
 }
 
 #learnedTotalText {
-  font-size: 18px;
+  font-size: clamp(16px, 4.5vw, 18px);
   white-space: nowrap;
 }
 
@@ -435,6 +437,91 @@ p {
   background: var(--paper);
   border: 1px solid var(--line);
   box-shadow: var(--soft-shadow);
+}
+
+.review-center,
+.listening-center {
+  min-height: 100dvh;
+  padding: calc(18px + env(safe-area-inset-top)) 16px calc(86px + env(safe-area-inset-bottom));
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.72), rgba(250, 247, 241, 0.96)),
+    var(--page);
+}
+
+.simple-page-head {
+  display: grid;
+  gap: 6px;
+  margin: 0 0 16px;
+}
+
+.simple-page-head h2 {
+  color: var(--color-text);
+  font-size: 24px;
+  line-height: 1.25;
+  font-weight: 800;
+}
+
+.simple-page-head p:not(.eyebrow) {
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.review-options {
+  display: grid;
+  gap: 12px;
+}
+
+.review-option {
+  min-height: 70px;
+  display: grid;
+  grid-template-columns: 50px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--paper);
+  text-align: left;
+  box-shadow: var(--soft-shadow);
+}
+
+.review-option strong,
+.review-option small {
+  display: block;
+  min-width: 0;
+}
+
+.review-option strong {
+  color: var(--color-text);
+  font-size: 16px;
+  font-weight: 800;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.review-option small {
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+.review-option b {
+  color: var(--green-dark);
+  font-size: 15px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.review-option.disabled {
+  opacity: 0.72;
+  box-shadow: none;
+}
+
+.review-option:disabled {
+  cursor: default;
 }
 
 .recommend-entry {
@@ -809,17 +896,6 @@ p {
   flex: 0 0 auto;
 }
 
-.speak {
-  display: none;
-  width: 64px;
-  height: 64px;
-  border-radius: 50%;
-  background: white;
-  color: var(--green);
-  font-size: 26px;
-  box-shadow: var(--soft-shadow);
-}
-
 .audio-status {
   min-height: 18px;
   color: var(--muted);
@@ -1166,7 +1242,9 @@ button:disabled {
   .study-view,
   .test-panel,
   .story-panel,
-  .settings-panel {
+  .settings-panel,
+  .review-center,
+  .listening-center {
     padding-inline: 14px;
   }
 
@@ -1421,10 +1499,60 @@ button:disabled {
             </button>
             <button class="recommend-entry" id="homeMistakeButton" type="button">
               <span class="recommend-icon green" aria-hidden="true"><svg><use href="#icon-list"></use></svg></span>
-              <span><strong>错词复习</strong><small>巩固薄弱词汇</small></span>
+              <span><strong>复习中心</strong><small>错词、到期、本周复习</small></span>
               <b>›</b>
             </button>
           </div>
+        </div>
+      </section>
+
+      <section class="view review-center hidden" id="reviewCenter" aria-label="复习中心">
+        <header class="simple-page-head">
+          <p class="eyebrow">复习中心</p>
+          <h2>今天要巩固什么？</h2>
+          <p>每次只练一组，保持轻松清楚。</p>
+        </header>
+        <div class="review-options">
+          <button class="review-option" id="reviewTodayMistakesButton" type="button">
+            <span class="recommend-icon green" aria-hidden="true"><svg><use href="#icon-list"></use></svg></span>
+            <span><strong data-empty="今天没有错词">复习今日错词</strong><small>只练今天还没掌握的词</small></span>
+            <b id="todayMistakeCountText">暂无</b>
+          </button>
+          <button class="review-option" id="reviewDueButton" type="button">
+            <span class="recommend-icon amber" aria-hidden="true"><svg><use href="#icon-clock"></use></svg></span>
+            <span><strong data-empty="暂无到期词">复习到期词</strong><small>按记忆间隔自动安排</small></span>
+            <b id="dueReviewCountText">暂无</b>
+          </button>
+          <button class="review-option" id="reviewWeeklyButton" type="button">
+            <span class="recommend-icon blue" aria-hidden="true"><svg><use href="#icon-calendar"></use></svg></span>
+            <span><strong data-empty="本周暂不用复习">开始本周复习</strong><small>每次最多 30 个，可以继续下一组</small></span>
+            <b id="weeklyReviewCountText">暂无</b>
+          </button>
+          <button class="review-option" id="reviewWeakButton" type="button">
+            <span class="recommend-icon green" aria-hidden="true"><svg><use href="#icon-chart"></use></svg></span>
+            <span><strong data-empty="暂无薄弱词">复习薄弱词</strong><small>优先练低掌握度词汇</small></span>
+            <b id="weakReviewCountText">暂无</b>
+          </button>
+        </div>
+      </section>
+
+      <section class="view listening-center hidden" id="listeningCenter" aria-label="听力中心">
+        <header class="simple-page-head">
+          <p class="eyebrow">听力中心</p>
+          <h2>先听懂，再会说</h2>
+          <p>综合小测检查词汇，短句练习训练真实场景。</p>
+        </header>
+        <div class="review-options">
+          <button class="review-option" id="listeningTestEntryButton" type="button">
+            <span class="recommend-icon amber" aria-hidden="true"><svg><use href="#icon-headphones"></use></svg></span>
+            <span><strong>综合听力小测</strong><small>从已学词中抽取 10 题</small></span>
+            <b>›</b>
+          </button>
+          <button class="review-option" id="listeningStoryEntryButton" type="button">
+            <span class="recommend-icon blue" aria-hidden="true"><svg><use href="#icon-volume"></use></svg></span>
+            <span><strong>听力短句练习</strong><small>按交通、办事、购物等场景逐句听</small></span>
+            <b>›</b>
+          </button>
         </div>
       </section>
 
@@ -1456,7 +1584,6 @@ button:disabled {
 
         <section class="actions" aria-label="学习操作">
           <button class="secondary" id="unknownButton" type="button">✕ 不认识</button>
-          <button class="speak" id="speakButton" type="button" aria-label="朗读单词" title="朗读">🔊</button>
           <button class="primary" id="knownButton" type="button">✓ 认识</button>
         </section>
         <p class="audio-status" id="audioStatus" aria-live="polite"></p>
@@ -1578,8 +1705,8 @@ button:disabled {
           <b>首页</b>
         </button>
         <button id="navStudyButton" type="button">
-          <span aria-hidden="true"><svg><use href="#icon-book"></use></svg></span>
-          <b>学习</b>
+          <span aria-hidden="true"><svg><use href="#icon-list"></use></svg></span>
+          <b>复习</b>
         </button>
         <button id="navListeningButton" type="button">
           <span aria-hidden="true"><svg><use href="#icon-headphones"></use></svg></span>
@@ -1592,598 +1719,13 @@ button:disabled {
       </nav>
     </main>
 
+    <script src="words.js"></script>
+    <script src="words-extra.js"></script>
+    <script src="words-generated.js"></script>
+    <script src="stories.js"></script>
     <script>
-window.WORDS = [
-  { id: 1, word: "မင်္ဂလာပါ", phonetic: "mingalaba", meaning: "你好", example: "မင်္ဂလာပါ၊ ကျွန်တော် အကူအညီ လိုပါတယ်။", exampleCn: "你好，我需要帮助。" },
-  { id: 2, word: "ကျေးဇူးတင်ပါတယ်", phonetic: "ce zu tin ba de", meaning: "谢谢", example: "သင့်အကူအညီအတွက် ကျေးဇူးတင်ပါတယ်။", exampleCn: "谢谢你的帮助。" },
-  { id: 3, word: "တောင်းပန်ပါတယ်", phonetic: "taung pan ba de", meaning: "对不起", example: "နောက်ကျသွားလို့ တောင်းပန်ပါတယ်။", exampleCn: "我迟到了，对不起。" },
-  { id: 4, word: "ဟုတ်ကဲ့", phonetic: "hou ke", meaning: "是的 / 好的", example: "ဟုတ်ကဲ့၊ နားလည်ပါတယ်။", exampleCn: "好的，我明白了。" },
-  { id: 5, word: "မဟုတ်ပါဘူး", phonetic: "ma hou ba bu", meaning: "不是", example: "ဒါ ကျွန်တော့်စာရွက် မဟုတ်ပါဘူး။", exampleCn: "这不是我的文件。" },
-  { id: 6, word: "နားလည်ပါတယ်", phonetic: "na le ba de", meaning: "明白", example: "သင်ပြောတာ နားလည်ပါတယ်။", exampleCn: "我明白你说的话。" },
-  { id: 7, word: "နားမလည်ပါဘူး", phonetic: "na ma le ba bu", meaning: "不明白", example: "မြန်မာလို နားမလည်ပါဘူး။", exampleCn: "我不太懂缅语。" },
-  { id: 8, word: "ဖြည်းဖြည်း ပြောပါ", phonetic: "hpye hpye pyaw ba", meaning: "请慢一点说", example: "ကျေးဇူးပြုပြီး ဖြည်းဖြည်း ပြောပါ။", exampleCn: "请慢一点说。" },
-  { id: 9, word: "ထပ်ပြောပါ", phonetic: "htat pyaw ba", meaning: "请再说一遍", example: "တစ်ခါ ထပ်ပြောပါ။", exampleCn: "请再说一遍。" },
-  { id: 10, word: "ဘယ်မှာလဲ", phonetic: "be hma le", meaning: "在哪里", example: "ရုံး ဘယ်မှာလဲ။", exampleCn: "办公室在哪里？" },
-  { id: 11, word: "ဘယ်လောက်လဲ", phonetic: "be lauk le", meaning: "多少钱", example: "ဒီဟာ ဘယ်လောက်လဲ။", exampleCn: "这个多少钱？" },
-  { id: 12, word: "လိုချင်ပါတယ်", phonetic: "lo chin ba de", meaning: "想要", example: "ရေတစ်ဘူး လိုချင်ပါတယ်။", exampleCn: "我想要一瓶水。" },
-  { id: 13, word: "မလိုပါဘူး", phonetic: "ma lo ba bu", meaning: "不需要", example: "အိတ် မလိုပါဘူး။", exampleCn: "我不需要袋子。" },
-  { id: 14, word: "အကူအညီ", phonetic: "a ku a nyi", meaning: "帮助", example: "အကူအညီ ပေးနိုင်မလား။", exampleCn: "可以帮我吗？" },
-  { id: 15, word: "ရုံး", phonetic: "yone", meaning: "办公室 / 政府部门", example: "အစိုးရရုံးကို သွားချင်ပါတယ်။", exampleCn: "我想去政府办公室。" },
-  { id: 16, word: "စာရွက်စာတမ်း", phonetic: "sa ywet sa dan", meaning: "文件 / 材料", example: "စာရွက်စာတမ်းတွေ ပြင်ဆင်ထားပါတယ်။", exampleCn: "文件材料已经准备好了。" },
-  { id: 17, word: "နိုင်ငံကူးလက်မှတ်", phonetic: "naing ngan ku let hmat", meaning: "护照", example: "နိုင်ငံကူးလက်မှတ် ပြချင်ပါတယ်။", exampleCn: "我想出示护照。" },
-  { id: 18, word: "မှတ်ပုံတင်", phonetic: "hmat pone tin", meaning: "身份证 / 登记", example: "မှတ်ပုံတင် မိတ္တူ လိုပါသလား။", exampleCn: "需要身份证复印件吗？" },
-  { id: 19, word: "လက်မှတ်", phonetic: "let hmat", meaning: "签名 / 票", example: "ဒီနေရာမှာ လက်မှတ်ထိုးပါ။", exampleCn: "请在这里签名。" },
-  { id: 20, word: "ဖောင်", phonetic: "hpoung", meaning: "表格", example: "ဒီဖောင်ကို ဖြည့်ရမလား။", exampleCn: "需要填写这张表吗？" },
-  { id: 21, word: "မိတ္တူ", phonetic: "mi tu", meaning: "复印件", example: "မိတ္တူ နှစ်စောင် လိုပါတယ်။", exampleCn: "需要两份复印件。" },
-  { id: 22, word: "တန်းစီ", phonetic: "tan si", meaning: "排队", example: "ဒီမှာ တန်းစီရပါမယ်။", exampleCn: "需要在这里排队。" },
-  { id: 23, word: "နံပါတ်", phonetic: "nan bat", meaning: "号码", example: "ကျွန်တော့်နံပါတ် ဘယ်အချိန်ခေါ်မလဲ။", exampleCn: "什么时候叫到我的号码？" },
-  { id: 24, word: "အခန်း", phonetic: "a khan", meaning: "房间", example: "အခန်း နံပါတ် သုံးကို သွားပါ။", exampleCn: "请去三号房间。" },
-  { id: 25, word: "အခကြေးငွေ", phonetic: "a kha cye ngwe", meaning: "费用", example: "အခကြေးငွေ ဘယ်လောက်ပေးရမလဲ။", exampleCn: "需要交多少费用？" },
-  { id: 26, word: "ငွေသား", phonetic: "ngwe tha", meaning: "现金", example: "ငွေသားနဲ့ ပေးလို့ရမလား။", exampleCn: "可以用现金支付吗？" },
-  { id: 27, word: "ဘဏ်ကတ်", phonetic: "ban kat", meaning: "银行卡", example: "ဘဏ်ကတ်နဲ့ ပေးလို့ရပါသလား။", exampleCn: "可以用银行卡支付吗？" },
-  { id: 28, word: "လိပ်စာ", phonetic: "leik sa", meaning: "地址", example: "လိပ်စာကို ဒီမှာရေးပါ။", exampleCn: "请把地址写在这里。" },
-  { id: 29, word: "ဖုန်းနံပါတ်", phonetic: "phone nan bat", meaning: "电话号码", example: "ဖုန်းနံပါတ် ထားခဲ့ပါ။", exampleCn: "请留下电话号码。" },
-  { id: 30, word: "ချိန်းဆိုချက်", phonetic: "chein so chet", meaning: "预约", example: "မနက်ဖြန် ချိန်းဆိုချက် ရှိပါတယ်။", exampleCn: "我明天有预约。" },
-  { id: 31, word: "ယနေ့", phonetic: "ya nei", meaning: "今天", example: "ယနေ့ လုပ်လို့ရမလား။", exampleCn: "今天可以办理吗？" },
-  { id: 32, word: "မနက်ဖြန်", phonetic: "ma net hpyan", meaning: "明天", example: "မနက်ဖြန် ပြန်လာပါမယ်။", exampleCn: "我明天再来。" },
-  { id: 33, word: "အခု", phonetic: "a khu", meaning: "现在", example: "အခု စောင့်ရမလား။", exampleCn: "现在需要等吗？" },
-  { id: 34, word: "စောင့်ပါ", phonetic: "saung ba", meaning: "请等待", example: "ခဏ စောင့်ပါ။", exampleCn: "请稍等。" },
-  { id: 35, word: "ပြီးပြီ", phonetic: "pi bi", meaning: "完成了", example: "လုပ်ငန်းစဉ် ပြီးပြီလား။", exampleCn: "流程完成了吗？" },
-  { id: 36, word: "မပြီးသေးပါဘူး", phonetic: "ma pi thay ba bu", meaning: "还没完成", example: "ဖောင် မပြီးသေးပါဘူး။", exampleCn: "表格还没填完。" },
-  { id: 37, word: "ဆေးရုံ", phonetic: "hsay yone", meaning: "医院", example: "ဆေးရုံကို သွားချင်ပါတယ်။", exampleCn: "我想去医院。" },
-  { id: 38, word: "ရဲစခန်း", phonetic: "ye sa khan", meaning: "警察局", example: "ရဲစခန်း ဘယ်မှာလဲ။", exampleCn: "警察局在哪里？" },
-  { id: 39, word: "စျေး", phonetic: "zay", meaning: "市场", example: "စျေးကို ဘယ်လိုသွားရမလဲ။", exampleCn: "市场怎么走？" },
-  { id: 40, word: "ဘတ်စ်ကား", phonetic: "bat ka", meaning: "公交车", example: "ဘတ်စ်ကားမှတ်တိုင် ဘယ်မှာလဲ။", exampleCn: "公交车站在哪里？" },
-  { id: 41, word: "တက္ကစီ", phonetic: "taxi", meaning: "出租车", example: "တက္ကစီ ခေါ်ပေးပါ။", exampleCn: "请帮我叫出租车。" },
-  { id: 42, word: "မှတ်တိုင်", phonetic: "hmat taing", meaning: "车站", example: "နောက်မှတ်တိုင်မှာ ဆင်းပါမယ်။", exampleCn: "我在下一站下车。" },
-  { id: 43, word: "ရေ", phonetic: "ye", meaning: "水", example: "ရေ တစ်ခွက် ပေးပါ။", exampleCn: "请给我一杯水。" },
-  { id: 44, word: "အစားအစာ", phonetic: "a sa a sa", meaning: "食物", example: "အစားအစာ မှာချင်ပါတယ်။", exampleCn: "我想点食物。" },
-  { id: 45, word: "မနက်စာ", phonetic: "ma net sa", meaning: "早餐", example: "မနက်စာ ရှိပါသလား။", exampleCn: "有早餐吗？" },
-  { id: 46, word: "အိမ်သာ", phonetic: "ein tha", meaning: "厕所", example: "အိမ်သာ ဘယ်မှာလဲ။", exampleCn: "厕所在哪里？" },
-  { id: 47, word: "ဈေးကြီးတယ်", phonetic: "zay gyi de", meaning: "太贵了", example: "နည်းနည်း ဈေးကြီးတယ်။", exampleCn: "有点贵。" },
-  { id: 48, word: "လျှော့ပေးပါ", phonetic: "shaut pay ba", meaning: "请便宜一点", example: "နည်းနည်း လျှော့ပေးပါ။", exampleCn: "请便宜一点。" },
-  { id: 49, word: "အရေးကြီးပါတယ်", phonetic: "a yay gyi ba de", meaning: "很重要", example: "ဒီစာရွက် အရေးကြီးပါတယ်။", exampleCn: "这份文件很重要。" },
-  { id: 50, word: "အရေးပေါ်", phonetic: "a yay paw", meaning: "紧急", example: "အရေးပေါ် အကူအညီ လိုပါတယ်။", exampleCn: "我需要紧急帮助。" }
-];
-
-window.EXTRA_WORDS = [
-  { id: 51, word: "ကျွန်တော်", phonetic: "kyun taw", meaning: "我（男性说法）", example: "ကျွန်တော် တရုတ်လူမျိုးပါ။", exampleCn: "我是中国人。" },
-  { id: 52, word: "ကျွန်မ", phonetic: "kyun ma", meaning: "我（女性说法）", example: "ကျွန်မ ဒီမှာ နေပါတယ်။", exampleCn: "我住在这里。" },
-  { id: 53, word: "ခင်ဗျား", phonetic: "khin bya", meaning: "你 / 您", example: "ခင်ဗျား နားလည်ပါသလား။", exampleCn: "您明白吗？" },
-  { id: 54, word: "သူ", phonetic: "thu", meaning: "他 / 她", example: "သူ ဒီမှာ အလုပ်လုပ်ပါတယ်။", exampleCn: "他/她在这里工作。" },
-  { id: 55, word: "ကျွန်တော်တို့", phonetic: "kyun taw doh", meaning: "我们", example: "ကျွန်တော်တို့ အတူတူ သွားမယ်။", exampleCn: "我们一起去。" },
-  { id: 56, word: "သူတို့", phonetic: "thu doh", meaning: "他们", example: "သူတို့ ရုံးထဲမှာ ရှိပါတယ်။", exampleCn: "他们在办公室里。" },
-  { id: 57, word: "ဘာလဲ", phonetic: "ba le", meaning: "是什么", example: "ဒါ ဘာလဲ။", exampleCn: "这是什么？" },
-  { id: 58, word: "ဘာကြောင့်လဲ", phonetic: "ba jaung le", meaning: "为什么", example: "ဘာကြောင့် စောင့်ရမလဲ။", exampleCn: "为什么需要等？" },
-  { id: 59, word: "ဘယ်လိုလဲ", phonetic: "be lo le", meaning: "怎么样 / 怎么做", example: "ဒီဖောင်ကို ဘယ်လို ဖြည့်ရမလဲ။", exampleCn: "这张表怎么填？" },
-  { id: 60, word: "ဘယ်သူလဲ", phonetic: "be thu le", meaning: "是谁", example: "တာဝန်ခံ ဘယ်သူလဲ။", exampleCn: "负责人是谁？" },
-  { id: 61, word: "ဘယ်အချိန်လဲ", phonetic: "be a chain le", meaning: "什么时候", example: "ဘယ်အချိန် ပြန်လာရမလဲ။", exampleCn: "什么时候需要回来？" },
-  { id: 62, word: "ဘယ်နှစ်ခုလဲ", phonetic: "be hna khu le", meaning: "几个", example: "မိတ္တူ ဘယ်နှစ်ခု လိုပါသလဲ။", exampleCn: "需要几份复印件？" },
-  { id: 63, word: "ဒီ", phonetic: "di", meaning: "这个", example: "ဒီ စာရွက် လိုပါတယ်။", exampleCn: "需要这份文件。" },
-  { id: 64, word: "အဲဒီ", phonetic: "eh di", meaning: "那个", example: "အဲဒီ အခန်းကို သွားပါ။", exampleCn: "请去那个房间。" },
-  { id: 65, word: "ဒီမှာ", phonetic: "di hma", meaning: "在这里", example: "ဒီမှာ လက်မှတ်ထိုးပါ။", exampleCn: "请在这里签名。" },
-  { id: 66, word: "အဲဒီမှာ", phonetic: "eh di hma", meaning: "在那里", example: "အဲဒီမှာ စောင့်ပါ။", exampleCn: "请在那里等。" },
-  { id: 67, word: "ရှိပါတယ်", phonetic: "shi ba de", meaning: "有 / 在", example: "ချိန်းဆိုချက် ရှိပါတယ်။", exampleCn: "我有预约。" },
-  { id: 68, word: "မရှိပါဘူး", phonetic: "ma shi ba bu", meaning: "没有 / 不在", example: "မိတ္တူ မရှိပါဘူး။", exampleCn: "我没有复印件。" },
-  { id: 69, word: "ရပါတယ်", phonetic: "ya ba de", meaning: "可以", example: "ဒီမှာ ပေးလို့ ရပါတယ်။", exampleCn: "可以在这里交。" },
-  { id: 70, word: "မရပါဘူး", phonetic: "ma ya ba bu", meaning: "不可以", example: "ဒီနေ့ မရပါဘူး။", exampleCn: "今天不可以。" },
-  { id: 71, word: "သွားမယ်", phonetic: "thwa me", meaning: "要去", example: "အစိုးရရုံးကို သွားမယ်။", exampleCn: "我要去政府办公室。" },
-  { id: 72, word: "လာမယ်", phonetic: "la me", meaning: "会来", example: "မနက်ဖြန် ပြန်လာမယ်။", exampleCn: "明天我会再来。" },
-  { id: 73, word: "ပြန်လာပါ", phonetic: "pyan la ba", meaning: "请回来 / 请再来", example: "မွန်းလွဲပိုင်း ပြန်လာပါ။", exampleCn: "请下午再来。" },
-  { id: 74, word: "ဝင်ပါ", phonetic: "win ba", meaning: "请进", example: "အခန်းထဲ ဝင်ပါ။", exampleCn: "请进房间。" },
-  { id: 75, word: "ထွက်ပါ", phonetic: "htwet ba", meaning: "请出去 / 出口", example: "ဒီတံခါးကနေ ထွက်ပါ။", exampleCn: "请从这个门出去。" },
-  { id: 76, word: "ထိုင်ပါ", phonetic: "htaing ba", meaning: "请坐", example: "ဒီမှာ ထိုင်ပါ။", exampleCn: "请坐在这里。" },
-  { id: 77, word: "ရပ်ပါ", phonetic: "yat ba", meaning: "请停 / 停下", example: "ဒီမှာ ရပ်ပါ။", exampleCn: "请在这里停。" },
-  { id: 78, word: "ရေးပါ", phonetic: "yay ba", meaning: "请写", example: "နာမည်ကို ဒီမှာ ရေးပါ။", exampleCn: "请把名字写在这里。" },
-  { id: 79, word: "ဖတ်ပါ", phonetic: "hpat ba", meaning: "请读", example: "ဒီစာကို ဖတ်ပါ။", exampleCn: "请读这段文字。" },
-  { id: 80, word: "ကြည့်ပါ", phonetic: "kyi ba", meaning: "请看", example: "ဒီနေရာကို ကြည့်ပါ။", exampleCn: "请看这个地方。" },
-  { id: 81, word: "ပေးပါ", phonetic: "pay ba", meaning: "请给", example: "စာရွက်စာတမ်း ပေးပါ။", exampleCn: "请给我文件。" },
-  { id: 82, word: "ယူပါ", phonetic: "yu ba", meaning: "请拿 / 取", example: "နံပါတ်စာရွက် ယူပါ။", exampleCn: "请拿号码纸。" },
-  { id: 83, word: "ပြပါ", phonetic: "pya ba", meaning: "请出示 / 请给看", example: "နိုင်ငံကူးလက်မှတ် ပြပါ။", exampleCn: "请出示护照。" },
-  { id: 84, word: "စစ်ပါ", phonetic: "sit ba", meaning: "请检查", example: "စာရွက်တွေ စစ်ပါ။", exampleCn: "请检查文件。" },
-  { id: 85, word: "ဖြည့်ပါ", phonetic: "hpyi ba", meaning: "请填写", example: "ဖောင်ကို ဖြည့်ပါ။", exampleCn: "请填写表格。" },
-  { id: 86, word: "လက်မှတ်ထိုးပါ", phonetic: "let hmat htoe ba", meaning: "请签名", example: "အောက်မှာ လက်မှတ်ထိုးပါ။", exampleCn: "请在下面签名。" },
-  { id: 87, word: "ပေးချေပါ", phonetic: "pay chay ba", meaning: "请付款", example: "ကောင်တာမှာ ပေးချေပါ။", exampleCn: "请在柜台付款。" },
-  { id: 88, word: "ကောင်တာ", phonetic: "counter", meaning: "柜台", example: "ကောင်တာ နံပါတ် နှစ်ကို သွားပါ။", exampleCn: "请去二号柜台。" },
-  { id: 89, word: "ဝန်ထမ်း", phonetic: "wun htan", meaning: "工作人员", example: "ဝန်ထမ်းကို မေးပါ။", exampleCn: "请问工作人员。" },
-  { id: 90, word: "တာဝန်ခံ", phonetic: "ta wun khan", meaning: "负责人", example: "တာဝန်ခံနဲ့ တွေ့ချင်ပါတယ်။", exampleCn: "我想见负责人。" },
-  { id: 91, word: "ဌာန", phonetic: "hta na", meaning: "部门", example: "လူဝင်မှုကြီးကြပ်ရေး ဌာန ဘယ်မှာလဲ။", exampleCn: "移民部门在哪里？" },
-  { id: 92, word: "လူဝင်မှုကြီးကြပ်ရေး", phonetic: "lu win hmu gyi kyat yay", meaning: "移民局 / 移民事务", example: "လူဝင်မှုကြီးကြပ်ရေးရုံးကို သွားချင်ပါတယ်။", exampleCn: "我想去移民局。" },
-  { id: 93, word: "အခွန်", phonetic: "a khun", meaning: "税", example: "အခွန်ဆောင်ရမလား။", exampleCn: "需要交税吗？" },
-  { id: 94, word: "ဘဏ်", phonetic: "ban", meaning: "银行", example: "ဘဏ် ဘယ်မှာလဲ။", exampleCn: "银行在哪里？" },
-  { id: 95, word: "ငွေလဲ", phonetic: "ngwe le", meaning: "换钱 / 兑换", example: "ငွေလဲချင်ပါတယ်။", exampleCn: "我想换钱。" },
-  { id: 96, word: "ဘောက်ချာ", phonetic: "voucher", meaning: "收据 / 凭证", example: "ဘောက်ချာ ပေးပါ။", exampleCn: "请给我收据。" },
-  { id: 97, word: "အတည်ပြု", phonetic: "a ti pyu", meaning: "确认", example: "အတည်ပြု ပေးပါ။", exampleCn: "请帮我确认。" },
-  { id: 98, word: "မိတ္တူကူး", phonetic: "mi tu ku", meaning: "复印", example: "ဒီစာရွက် မိတ္တူကူးချင်ပါတယ်။", exampleCn: "我想复印这份文件。" },
-  { id: 99, word: "ဓာတ်ပုံ", phonetic: "dat pone", meaning: "照片", example: "ဓာတ်ပုံ နှစ်ပုံ လိုပါတယ်။", exampleCn: "需要两张照片。" },
-  { id: 100, word: "အရွယ်အစား", phonetic: "a ywe a sa", meaning: "尺寸 / 大小", example: "ဓာတ်ပုံ အရွယ်အစား ဘယ်လောက်လဲ။", exampleCn: "照片尺寸是多少？" },
-  { id: 101, word: "မနက်", phonetic: "ma net", meaning: "早上", example: "မနက် ကိုးနာရီ လာပါ။", exampleCn: "请早上九点来。" },
-  { id: 102, word: "နေ့လယ်", phonetic: "nei le", meaning: "中午", example: "နေ့လယ်မှာ ပိတ်ပါတယ်။", exampleCn: "中午会关门。" },
-  { id: 103, word: "ညနေ", phonetic: "nya nay", meaning: "傍晚 / 下午晚些时候", example: "ညနေ ပြန်လာပါ။", exampleCn: "请傍晚再来。" },
-  { id: 104, word: "ည", phonetic: "nya", meaning: "晚上", example: "ညမှာ မဖွင့်ပါဘူး။", exampleCn: "晚上不开门。" },
-  { id: 105, word: "အခုချက်ချင်း", phonetic: "a khu chet chin", meaning: "马上 / 现在立刻", example: "အခုချက်ချင်း လုပ်လို့ရမလား။", exampleCn: "现在马上可以办吗？" },
-  { id: 106, word: "ခဏ", phonetic: "kha na", meaning: "一会儿", example: "ခဏ စောင့်ပါ။", exampleCn: "请稍等一会儿。" },
-  { id: 107, word: "နောက်မှ", phonetic: "nauk hma", meaning: "以后 / 稍后", example: "နောက်မှ ပြန်လာပါမယ်။", exampleCn: "我稍后再来。" },
-  { id: 108, word: "အရင်", phonetic: "a yin", meaning: "先 / 以前", example: "အရင် ဖောင်ဖြည့်ပါ။", exampleCn: "请先填表。" },
-  { id: 109, word: "ပြီးမှ", phonetic: "pi hma", meaning: "之后", example: "ပြီးမှ ကောင်တာကို သွားပါ။", exampleCn: "之后请去柜台。" },
-  { id: 110, word: "နေ့တိုင်း", phonetic: "nei taing", meaning: "每天", example: "နေ့တိုင်း ဖွင့်ပါသလား။", exampleCn: "每天都开门吗？" },
-  { id: 111, word: "တနင်္လာနေ့", phonetic: "ta nin la nei", meaning: "星期一", example: "တနင်္လာနေ့ လာပါ။", exampleCn: "请星期一来。" },
-  { id: 112, word: "သောကြာနေ့", phonetic: "thaw kya nei", meaning: "星期五", example: "သောကြာနေ့ ပိတ်ပါသလား။", exampleCn: "星期五关门吗？" },
-  { id: 113, word: "ပိတ်ပါတယ်", phonetic: "peik ba de", meaning: "关门 / 关闭", example: "ဒီနေ့ ရုံး ပိတ်ပါတယ်။", exampleCn: "今天办公室关门。" },
-  { id: 114, word: "ဖွင့်ပါတယ်", phonetic: "hpwint ba de", meaning: "开门 / 开放", example: "မနက် ကိုးနာရီ ဖွင့်ပါတယ်။", exampleCn: "早上九点开门。" },
-  { id: 115, word: "ဘယ်ဘက်", phonetic: "be bet", meaning: "左边", example: "ဘယ်ဘက်ကို ကွေ့ပါ။", exampleCn: "请往左转。" },
-  { id: 116, word: "ညာဘက်", phonetic: "nya bet", meaning: "右边", example: "ညာဘက်မှာ ရုံး ရှိပါတယ်။", exampleCn: "办公室在右边。" },
-  { id: 117, word: "ရှေ့", phonetic: "shay", meaning: "前面", example: "ရှေ့မှာ ကောင်တာ ရှိပါတယ်။", exampleCn: "前面有柜台。" },
-  { id: 118, word: "နောက်", phonetic: "nauk", meaning: "后面", example: "နောက်မှာ တန်းစီပါ။", exampleCn: "请在后面排队。" },
-  { id: 119, word: "အနီးမှာ", phonetic: "a ni hma", meaning: "附近", example: "အနီးမှာ ဘဏ် ရှိပါသလား။", exampleCn: "附近有银行吗？" },
-  { id: 120, word: "အဝေးမှာ", phonetic: "a way hma", meaning: "远处", example: "ရုံးက အဝေးမှာလား။", exampleCn: "办公室远吗？" },
-  { id: 121, word: "တည့်တည့်", phonetic: "te de", meaning: "直走", example: "တည့်တည့် သွားပါ။", exampleCn: "请直走。" },
-  { id: 122, word: "ကွေ့ပါ", phonetic: "kwe ba", meaning: "请转弯", example: "ရှေ့မှာ ညာဘက်ကို ကွေ့ပါ။", exampleCn: "前面请右转。" },
-  { id: 123, word: "အပေါ်ထပ်", phonetic: "a paw htat", meaning: "楼上", example: "အပေါ်ထပ်ကို သွားပါ။", exampleCn: "请去楼上。" },
-  { id: 124, word: "အောက်ထပ်", phonetic: "auk htat", meaning: "楼下", example: "အောက်ထပ်မှာ ပေးချေပါ။", exampleCn: "请在楼下付款。" },
-  { id: 125, word: "တံခါး", phonetic: "ta ga", meaning: "门", example: "တံခါး ဘေးမှာ စောင့်ပါ။", exampleCn: "请在门旁边等。" },
-  { id: 126, word: "လမ်း", phonetic: "lan", meaning: "路 / 街道", example: "ဒီလမ်းကနေ သွားပါ။", exampleCn: "请从这条路走。" },
-  { id: 127, word: "ကား", phonetic: "ka", meaning: "车", example: "ကား ရှိပါသလား။", exampleCn: "有车吗？" },
-  { id: 128, word: "ဆိုင်ကယ်", phonetic: "hsai ke", meaning: "摩托车", example: "ဆိုင်ကယ်နဲ့ သွားလို့ရမလား။", exampleCn: "可以骑摩托车去吗？" },
-  { id: 129, word: "လမ်းလျှောက်", phonetic: "lan shauk", meaning: "走路", example: "လမ်းလျှောက် သွားလို့ရပါတယ်။", exampleCn: "可以走路去。" },
-  { id: 130, word: "ဘယ်လောက်ကြာမလဲ", phonetic: "be lauk kya ma le", meaning: "要多久", example: "ရုံးကို ဘယ်လောက်ကြာမလဲ။", exampleCn: "去办公室要多久？" },
-  { id: 131, word: "ငါးမိနစ်", phonetic: "nga mi nit", meaning: "五分钟", example: "ငါးမိနစ် စောင့်ပါ။", exampleCn: "请等五分钟。" },
-  { id: 132, word: "တစ်နာရီ", phonetic: "ta na yi", meaning: "一小时", example: "တစ်နာရီ ကြာပါမယ်။", exampleCn: "需要一个小时。" },
-  { id: 133, word: "စျေးနှုန်း", phonetic: "zay hnon", meaning: "价格", example: "စျေးနှုန်း ဘယ်လောက်လဲ။", exampleCn: "价格是多少？" },
-  { id: 134, word: "လက်ခံပါတယ်", phonetic: "let khan ba de", meaning: "接受", example: "ဘဏ်ကတ် လက်ခံပါသလား။", exampleCn: "接受银行卡吗？" },
-  { id: 135, word: "မလက်ခံပါဘူး", phonetic: "ma let khan ba bu", meaning: "不接受", example: "ကတ် မလက်ခံပါဘူး။", exampleCn: "不接受银行卡。" },
-  { id: 136, word: "အကြွေ", phonetic: "a kywe", meaning: "零钱", example: "အကြွေ ရှိပါသလား။", exampleCn: "有零钱吗？" },
-  { id: 137, word: "ပိုက်ဆံ", phonetic: "paik hsan", meaning: "钱", example: "ပိုက်ဆံ လုံလောက်ပါသလား။", exampleCn: "钱够吗？" },
-  { id: 138, word: "ပြန်အမ်းငွေ", phonetic: "pyan an ngwe", meaning: "找零 / 退款", example: "ပြန်အမ်းငွေ ပေးပါ။", exampleCn: "请给我找零/退款。" },
-  { id: 139, word: "ဝယ်ချင်ပါတယ်", phonetic: "we chin ba de", meaning: "想买", example: "ဒီဟာ ဝယ်ချင်ပါတယ်။", exampleCn: "我想买这个。" },
-  { id: 140, word: "ကြည့်ချင်ပါတယ်", phonetic: "kyi chin ba de", meaning: "想看", example: "နောက်တစ်ခု ကြည့်ချင်ပါတယ်။", exampleCn: "我想看另一个。" },
-  { id: 141, word: "မှာချင်ပါတယ်", phonetic: "hma chin ba de", meaning: "想点 / 想订", example: "ထမင်း မှာချင်ပါတယ်။", exampleCn: "我想点米饭。" },
-  { id: 142, word: "ထမင်း", phonetic: "hta min", meaning: "米饭 / 饭", example: "ထမင်း တစ်ပွဲ ပေးပါ။", exampleCn: "请给我一份米饭。" },
-  { id: 143, word: "ဟင်း", phonetic: "hin", meaning: "菜 / 咖喱", example: "ဟင်း ဘာရှိပါသလဲ။", exampleCn: "有什么菜？" },
-  { id: 144, word: "ရေနွေး", phonetic: "ye nway", meaning: "热水", example: "ရေနွေး ပေးပါ။", exampleCn: "请给我热水。" },
-  { id: 145, word: "ရေအေး", phonetic: "ye ay", meaning: "冷水", example: "ရေအေး ရှိပါသလား။", exampleCn: "有冷水吗？" },
-  { id: 146, word: "မစားဘူး", phonetic: "ma sa bu", meaning: "不吃", example: "ငရုတ်သီး မစားဘူး။", exampleCn: "我不吃辣椒。" },
-  { id: 147, word: "စားလို့ရပါတယ်", phonetic: "sa lo ya ba de", meaning: "可以吃", example: "ဒီဟာ စားလို့ရပါတယ်။", exampleCn: "这个可以吃。" },
-  { id: 148, word: "အစပ်", phonetic: "a sat", meaning: "辣", example: "အစပ် မလိုပါဘူး။", exampleCn: "不要辣。" },
-  { id: 149, word: "ချိုပါတယ်", phonetic: "cho ba de", meaning: "甜", example: "ဒီဟာ ချိုပါတယ်။", exampleCn: "这个很甜。" },
-  { id: 150, word: "အေးပါတယ်", phonetic: "ay ba de", meaning: "冷 / 凉", example: "ရေ အေးပါတယ်။", exampleCn: "水是凉的。" }
-  ,{ id: 151, word: "ပူပါတယ်", phonetic: "pu ba de", meaning: "热", example: "ရေနွေး ပူပါတယ်။", exampleCn: "热水很烫。" },
-  { id: 152, word: "ကောင်းပါတယ်", phonetic: "kaung ba de", meaning: "好", example: "ဒီဟာ ကောင်းပါတယ်။", exampleCn: "这个很好。" },
-  { id: 153, word: "မကောင်းပါဘူး", phonetic: "ma kaung ba bu", meaning: "不好", example: "ဒီလမ်း မကောင်းပါဘူး။", exampleCn: "这条路不好。" },
-  { id: 154, word: "လွယ်ပါတယ်", phonetic: "lwe ba de", meaning: "容易", example: "ဒီဖောင် လွယ်ပါတယ်။", exampleCn: "这张表很容易。" },
-  { id: 155, word: "ခက်ပါတယ်", phonetic: "khet ba de", meaning: "难", example: "မြန်မာစာ နည်းနည်း ခက်ပါတယ်။", exampleCn: "缅文有点难。" },
-  { id: 156, word: "မြန်ပါတယ်", phonetic: "myan ba de", meaning: "快", example: "ဒီကား မြန်ပါတယ်။", exampleCn: "这辆车很快。" },
-  { id: 157, word: "နှေးပါတယ်", phonetic: "hnay ba de", meaning: "慢", example: "အင်တာနက် နှေးပါတယ်။", exampleCn: "网络很慢。" },
-  { id: 158, word: "ကြီးပါတယ်", phonetic: "gyi ba de", meaning: "大", example: "အခန်း ကြီးပါတယ်။", exampleCn: "房间很大。" },
-  { id: 159, word: "သေးပါတယ်", phonetic: "thay ba de", meaning: "小", example: "ဓာတ်ပုံ သေးပါတယ်။", exampleCn: "照片太小。" },
-  { id: 160, word: "များပါတယ်", phonetic: "mya ba de", meaning: "多", example: "လူ များပါတယ်။", exampleCn: "人很多。" },
-  { id: 161, word: "နည်းပါတယ်", phonetic: "ne ba de", meaning: "少", example: "ပိုက်ဆံ နည်းပါတယ်။", exampleCn: "钱不多。" },
-  { id: 162, word: "အသစ်", phonetic: "a thit", meaning: "新的", example: "ဖောင် အသစ် ယူပါ။", exampleCn: "请拿新的表格。" },
-  { id: 163, word: "အဟောင်း", phonetic: "a haung", meaning: "旧的", example: "စာရွက် အဟောင်း မလိုပါဘူး။", exampleCn: "旧文件不需要。" },
-  { id: 164, word: "မှန်ပါတယ်", phonetic: "hman ba de", meaning: "正确", example: "အချက်အလက် မှန်ပါတယ်။", exampleCn: "信息是正确的。" },
-  { id: 165, word: "မှားပါတယ်", phonetic: "hma ba de", meaning: "错误", example: "နံပါတ် မှားပါတယ်။", exampleCn: "号码错了。" },
-  { id: 166, word: "နာမည်", phonetic: "na me", meaning: "名字", example: "နာမည် ဘယ်လို ရေးရမလဲ။", exampleCn: "名字怎么写？" },
-  { id: 167, word: "အသက်", phonetic: "a thet", meaning: "年龄", example: "အသက် ဘယ်လောက်လဲ။", exampleCn: "年龄多大？" },
-  { id: 168, word: "လူမျိုး", phonetic: "lu myo", meaning: "民族 / 国籍", example: "ခင်ဗျား ဘယ်လူမျိုးလဲ။", exampleCn: "你是什么国籍/民族？" },
-  { id: 169, word: "တရုတ်", phonetic: "ta yoke", meaning: "中国 / 中国人", example: "ကျွန်တော် တရုတ်ပါ။", exampleCn: "我是中国人。" },
-  { id: 170, word: "မြန်မာ", phonetic: "myan ma", meaning: "缅甸 / 缅语 / 缅族", example: "မြန်မာလို ပြောပါ။", exampleCn: "请说缅语。" },
-  { id: 171, word: "အင်္ဂလိပ်", phonetic: "in ga leik", meaning: "英语", example: "အင်္ဂလိပ်လို ပြောလို့ရမလား။", exampleCn: "可以说英语吗？" },
-  { id: 172, word: "ဘာသာပြန်", phonetic: "ba tha pyan", meaning: "翻译", example: "ဘာသာပြန် လိုပါတယ်။", exampleCn: "我需要翻译。" },
-  { id: 173, word: "ဖုန်း", phonetic: "phone", meaning: "手机 / 电话", example: "ဖုန်း ခေါ်လို့ရမလား။", exampleCn: "可以打电话吗？" },
-  { id: 174, word: "အင်တာနက်", phonetic: "internet", meaning: "互联网", example: "အင်တာနက် ရှိပါသလား။", exampleCn: "有网络吗？" },
-  { id: 175, word: "ဝိုင်ဖိုင်", phonetic: "wifi", meaning: "Wi-Fi", example: "ဝိုင်ဖိုင် စကားဝှက် ပေးပါ။", exampleCn: "请给我 Wi-Fi 密码。" },
-  { id: 176, word: "စကားဝှက်", phonetic: "sa ga whet", meaning: "密码", example: "စကားဝှက် မသိပါဘူး။", exampleCn: "我不知道密码。" },
-  { id: 177, word: "အီးမေးလ်", phonetic: "email", meaning: "电子邮件", example: "အီးမေးလ် လိပ်စာ ရေးပါ။", exampleCn: "请写邮箱地址。" },
-  { id: 178, word: "အကောင့်", phonetic: "account", meaning: "账户", example: "အကောင့် ဖွင့်ချင်ပါတယ်။", exampleCn: "我想开账户。" },
-  { id: 179, word: "ပိတ်ထားပါတယ်", phonetic: "peik hta ba de", meaning: "已关闭", example: "အကောင့် ပိတ်ထားပါတယ်။", exampleCn: "账户已关闭。" },
-  { id: 180, word: "ဖွင့်ချင်ပါတယ်", phonetic: "hpwint chin ba de", meaning: "想开通 / 想打开", example: "ဘဏ်အကောင့် ဖွင့်ချင်ပါတယ်။", exampleCn: "我想开银行账户。" },
-  { id: 181, word: "တစ်", phonetic: "tit", meaning: "一", example: "တစ်စောင် လိုပါတယ်။", exampleCn: "需要一份。" },
-  { id: 182, word: "နှစ်", phonetic: "hnit", meaning: "二", example: "မိတ္တူ နှစ်စောင် ပေးပါ။", exampleCn: "请给两份复印件。" },
-  { id: 183, word: "သုံး", phonetic: "thone", meaning: "三", example: "အခန်း သုံးကို သွားပါ။", exampleCn: "请去三号房。" },
-  { id: 184, word: "လေး", phonetic: "lay", meaning: "四", example: "လေးခု လိုပါတယ်။", exampleCn: "需要四个。" },
-  { id: 185, word: "ငါး", phonetic: "nga", meaning: "五", example: "ငါးမိနစ် စောင့်ပါ။", exampleCn: "请等五分钟。" },
-  { id: 186, word: "ခြောက်", phonetic: "chauk", meaning: "六", example: "ခြောက်နာရီမှာ ပိတ်ပါတယ်။", exampleCn: "六点关门。" },
-  { id: 187, word: "ခုနစ်", phonetic: "khu hnit", meaning: "七", example: "ခုနစ်ရက် ကြာပါမယ်။", exampleCn: "需要七天。" },
-  { id: 188, word: "ရှစ်", phonetic: "shit", meaning: "八", example: "ရှစ်နာရီ ဖွင့်ပါတယ်။", exampleCn: "八点开门。" },
-  { id: 189, word: "ကိုး", phonetic: "ko", meaning: "九", example: "ကိုးနာရီ လာပါ။", exampleCn: "请九点来。" },
-  { id: 190, word: "ဆယ်", phonetic: "hse", meaning: "十", example: "ဆယ်ခု လိုပါတယ်။", exampleCn: "需要十个。" },
-  { id: 191, word: "တစ်ရာ", phonetic: "ta ya", meaning: "一百", example: "တစ်ရာ ပေးပါ။", exampleCn: "请给一百。" },
-  { id: 192, word: "တစ်ထောင်", phonetic: "ta htaung", meaning: "一千", example: "တစ်ထောင် ကျသင့်ပါတယ်။", exampleCn: "需要一千。" },
-  { id: 193, word: "တစ်သောင်း", phonetic: "ta thaung", meaning: "一万", example: "တစ်သောင်း ပေးရမလား။", exampleCn: "需要付一万吗？" },
-  { id: 194, word: "ကျပ်", phonetic: "kyat", meaning: "缅币 / 元", example: "ငါးထောင် ကျပ်ပါ။", exampleCn: "五千缅币。" },
-  { id: 195, word: "ဒေါ်လာ", phonetic: "dollar", meaning: "美元", example: "ဒေါ်လာနဲ့ ပေးလို့ရမလား။", exampleCn: "可以用美元支付吗？" },
-  { id: 196, word: "တောင်းခံ", phonetic: "taung khan", meaning: "要求 / 申请", example: "အကူအညီ တောင်းခံချင်ပါတယ်။", exampleCn: "我想请求帮助。" },
-  { id: 197, word: "လျှောက်ထား", phonetic: "shauk hta", meaning: "申请", example: "ဗီဇာ လျှောက်ထားချင်ပါတယ်။", exampleCn: "我想申请签证。" },
-  { id: 198, word: "ဗီဇာ", phonetic: "visa", meaning: "签证", example: "ဗီဇာ သက်တမ်းတိုးချင်ပါတယ်။", exampleCn: "我想延长签证。" },
-  { id: 199, word: "သက်တမ်းတိုး", phonetic: "thet tan toe", meaning: "延期 / 续期", example: "သက်တမ်းတိုး လုပ်လို့ရမလား။", exampleCn: "可以办理续期吗？" },
-  { id: 200, word: "ခွင့်ပြုချက်", phonetic: "khwint pyu chet", meaning: "许可 / 批准", example: "ခွင့်ပြုချက် လိုပါသလား။", exampleCn: "需要许可吗？" },
-  { id: 201, word: "တံဆိပ်တုံး", phonetic: "ta hseik tone", meaning: "印章", example: "တံဆိပ်တုံး ထိုးပါ။", exampleCn: "请盖章。" },
-  { id: 202, word: "ထောက်ခံစာ", phonetic: "htauk khan sa", meaning: "证明信 / 推荐信", example: "ထောက်ခံစာ လိုပါတယ်။", exampleCn: "需要证明信。" },
-  { id: 203, word: "အာမခံ", phonetic: "a ma khan", meaning: "担保 / 保证", example: "အာမခံ လိုပါသလား။", exampleCn: "需要担保吗？" },
-  { id: 204, word: "နေထိုင်ခွင့်", phonetic: "nay htaing khwint", meaning: "居留许可", example: "နေထိုင်ခွင့် လျှောက်ထားချင်ပါတယ်။", exampleCn: "我想申请居留许可。" },
-  { id: 205, word: "အလုပ်လုပ်ခွင့်", phonetic: "a loke loke khwint", meaning: "工作许可", example: "အလုပ်လုပ်ခွင့် ရှိပါသလား။", exampleCn: "有工作许可吗？" },
-  { id: 206, word: "စာချုပ်", phonetic: "sa choke", meaning: "合同", example: "စာချုပ် ဖတ်ချင်ပါတယ်။", exampleCn: "我想看合同。" },
-  { id: 207, word: "ငှားရမ်း", phonetic: "hnga yan", meaning: "租赁", example: "အိမ် ငှားရမ်းချင်ပါတယ်။", exampleCn: "我想租房。" },
-  { id: 208, word: "အိမ်", phonetic: "ein", meaning: "房子 / 家", example: "အိမ် ဘယ်မှာလဲ။", exampleCn: "家在哪里？" },
-  { id: 209, word: "ဟိုတယ်", phonetic: "hotel", meaning: "酒店", example: "ဟိုတယ်ကို သွားချင်ပါတယ်။", exampleCn: "我想去酒店。" },
-  { id: 210, word: "အခန်းခ", phonetic: "a khan kha", meaning: "房费", example: "အခန်းခ ဘယ်လောက်လဲ။", exampleCn: "房费多少？" },
-  { id: 211, word: "သော့", phonetic: "thaw", meaning: "钥匙", example: "သော့ ပေးပါ။", exampleCn: "请给我钥匙。" },
-  { id: 212, word: "အိပ်ရာ", phonetic: "eik ya", meaning: "床", example: "အိပ်ရာ သန့်ပါတယ်။", exampleCn: "床很干净。" },
-  { id: 213, word: "သန့်ပါတယ်", phonetic: "thant ba de", meaning: "干净", example: "အခန်း သန့်ပါတယ်။", exampleCn: "房间很干净。" },
-  { id: 214, word: "ညစ်ပါတယ်", phonetic: "nyit ba de", meaning: "脏", example: "အိမ်သာ ညစ်ပါတယ်။", exampleCn: "厕所很脏。" },
-  { id: 215, word: "ပျက်နေပါတယ်", phonetic: "pyet nay ba de", meaning: "坏了", example: "ဖုန်း ပျက်နေပါတယ်။", exampleCn: "手机坏了。" },
-  { id: 216, word: "ပြင်ပေးပါ", phonetic: "pyin pay ba", meaning: "请修理", example: "ဒီဟာ ပြင်ပေးပါ။", exampleCn: "请修理这个。" },
-  { id: 217, word: "ဆရာဝန်", phonetic: "hsa ya wun", meaning: "医生", example: "ဆရာဝန်နဲ့ တွေ့ချင်ပါတယ်။", exampleCn: "我想见医生。" },
-  { id: 218, word: "ဆေး", phonetic: "hsay", meaning: "药", example: "ဆေး လိုပါတယ်။", exampleCn: "我需要药。" },
-  { id: 219, word: "နာပါတယ်", phonetic: "na ba de", meaning: "疼 / 痛", example: "ဗိုက် နာပါတယ်။", exampleCn: "肚子疼。" },
-  { id: 220, word: "မူးပါတယ်", phonetic: "mu ba de", meaning: "头晕", example: "နည်းနည်း မူးပါတယ်။", exampleCn: "有点头晕。" },
-  { id: 221, word: "ဖျားပါတယ်", phonetic: "hpya ba de", meaning: "发烧", example: "ကျွန်တော် ဖျားပါတယ်။", exampleCn: "我发烧了。" },
-  { id: 222, word: "ချောင်းဆိုး", phonetic: "chaung hso", meaning: "咳嗽", example: "ချောင်းဆိုး နေပါတယ်။", exampleCn: "我在咳嗽。" },
-  { id: 223, word: "ဗိုက်", phonetic: "baike", meaning: "肚子", example: "ဗိုက် နာပါတယ်။", exampleCn: "肚子疼。" },
-  { id: 224, word: "ခေါင်း", phonetic: "gaung", meaning: "头", example: "ခေါင်း ကိုက်ပါတယ်။", exampleCn: "头疼。" },
-  { id: 225, word: "ကိုက်ပါတယ်", phonetic: "kaik ba de", meaning: "疼 / 咬", example: "သွား ကိုက်ပါတယ်။", exampleCn: "牙疼。" },
-  { id: 226, word: "သွား", phonetic: "thwa", meaning: "牙齿 / 去", example: "သွားဆရာဝန် လိုပါတယ်။", exampleCn: "我需要牙医。" },
-  { id: 227, word: "အန္တရာယ်", phonetic: "an da ye", meaning: "危险", example: "ဒီနေရာ အန္တရာယ် ရှိပါတယ်။", exampleCn: "这个地方有危险。" },
-  { id: 228, word: "ကယ်ပါ", phonetic: "ke ba", meaning: "救命 / 请救我", example: "ကယ်ပါ၊ အရေးပေါ်ပါ။", exampleCn: "救命，是紧急情况。" },
-  { id: 229, word: "ပျောက်သွားပါတယ်", phonetic: "pyauk thwa ba de", meaning: "丢了 / 迷路了", example: "ပိုက်ဆံအိတ် ပျောက်သွားပါတယ်။", exampleCn: "钱包丢了。" },
-  { id: 230, word: "ရှာချင်ပါတယ်", phonetic: "sha chin ba de", meaning: "想找", example: "ဟိုတယ်ကို ရှာချင်ပါတယ်။", exampleCn: "我想找酒店。" },
-  { id: 231, word: "ခေါ်ပါ", phonetic: "khaw ba", meaning: "请叫 / 请呼叫", example: "ရဲကို ခေါ်ပါ။", exampleCn: "请叫警察。" },
-  { id: 232, word: "ဆက်သွယ်ပါ", phonetic: "hset thwe ba", meaning: "请联系", example: "ဒီနံပါတ်ကို ဆက်သွယ်ပါ။", exampleCn: "请联系这个号码。" },
-  { id: 233, word: "သတိထားပါ", phonetic: "tha di hta ba", meaning: "请小心", example: "လမ်းမှာ သတိထားပါ။", exampleCn: "路上请小心。" },
-  { id: 234, word: "မကြောက်ပါနဲ့", phonetic: "ma kyauk ba ne", meaning: "不要害怕", example: "မကြောက်ပါနဲ့၊ ကူညီပါမယ်။", exampleCn: "不要害怕，我会帮忙。" },
-  { id: 235, word: "အဆင်ပြေပါတယ်", phonetic: "a hsin pyay ba de", meaning: "可以 / 没问题", example: "အဆင်ပြေပါတယ်၊ ကျေးဇူးပါ။", exampleCn: "没问题，谢谢。" },
-  { id: 236, word: "အဆင်မပြေပါဘူး", phonetic: "a hsin ma pyay ba bu", meaning: "不方便 / 不行", example: "ဒီနေ့ အဆင်မပြေပါဘူး။", exampleCn: "今天不方便。" },
-  { id: 237, word: "စိတ်မကောင်းပါဘူး", phonetic: "seit ma kaung ba bu", meaning: "很遗憾 / 抱歉", example: "စိတ်မကောင်းပါဘူး၊ မရပါဘူး။", exampleCn: "很抱歉，不可以。" },
-  { id: 238, word: "ပြဿနာ", phonetic: "pyat tha na", meaning: "问题 / 麻烦", example: "ပြဿနာ ရှိပါသလား။", exampleCn: "有问题吗？" },
-  { id: 239, word: "မေးချင်ပါတယ်", phonetic: "may chin ba de", meaning: "想问", example: "မေးချင်တာ ရှိပါတယ်။", exampleCn: "我有问题想问。" },
-  { id: 240, word: "ဖြေပါ", phonetic: "hpye ba", meaning: "请回答", example: "ဒီမေးခွန်းကို ဖြေပါ။", exampleCn: "请回答这个问题。" },
-  { id: 241, word: "သိပါတယ်", phonetic: "thi ba de", meaning: "知道", example: "လိပ်စာ သိပါတယ်။", exampleCn: "我知道地址。" },
-  { id: 242, word: "မသိပါဘူး", phonetic: "ma thi ba bu", meaning: "不知道", example: "လမ်း မသိပါဘူး။", exampleCn: "我不知道路。" },
-  { id: 243, word: "မှတ်မိပါတယ်", phonetic: "hmat mi ba de", meaning: "记得", example: "နံပါတ် မှတ်မိပါတယ်။", exampleCn: "我记得号码。" },
-  { id: 244, word: "မမှတ်မိပါဘူး", phonetic: "ma hmat mi ba bu", meaning: "不记得", example: "နာမည် မမှတ်မိပါဘူး။", exampleCn: "我不记得名字。" },
-  { id: 245, word: "စဉ်းစားပါ", phonetic: "sin za ba", meaning: "请考虑 / 想一想", example: "ခဏ စဉ်းစားပါ။", exampleCn: "请想一想。" },
-  { id: 246, word: "သဘောတူပါတယ်", phonetic: "tha baw tu ba de", meaning: "同意", example: "ကျွန်တော် သဘောတူပါတယ်။", exampleCn: "我同意。" },
-  { id: 247, word: "သဘောမတူပါဘူး", phonetic: "tha baw ma tu ba bu", meaning: "不同意", example: "ဒီစျေးကို သဘောမတူပါဘူး။", exampleCn: "我不同意这个价格。" },
-  { id: 248, word: "လိုပါတယ်", phonetic: "lo ba de", meaning: "需要", example: "အကူအညီ လိုပါတယ်။", exampleCn: "需要帮助。" },
-  { id: 249, word: "မလိုပါ", phonetic: "ma lo ba", meaning: "不需要", example: "အိတ် မလိုပါ။", exampleCn: "不需要袋子。" },
-  { id: 250, word: "ဖြစ်နိုင်ပါတယ်", phonetic: "hpyit naing ba de", meaning: "可能 / 可以做到", example: "မနက်ဖြန် ဖြစ်နိုင်ပါတယ်။", exampleCn: "明天可能可以。" },
-  { id: 251, word: "မဖြစ်နိုင်ပါဘူး", phonetic: "ma hpyit naing ba bu", meaning: "不可能", example: "ဒီနေ့ မဖြစ်နိုင်ပါဘူး။", exampleCn: "今天不可能。" },
-  { id: 252, word: "ကြိုတင်", phonetic: "kyo tin", meaning: "提前", example: "ကြိုတင် ချိန်းဆိုပါ။", exampleCn: "请提前预约。" },
-  { id: 253, word: "ရုတ်တရက်", phonetic: "yoke ta yet", meaning: "突然", example: "ရုတ်တရက် မိုးရွာပါတယ်။", exampleCn: "突然下雨了。" },
-  { id: 254, word: "မိုး", phonetic: "moe", meaning: "雨 / 天气", example: "မိုး ရွာနေပါတယ်။", exampleCn: "正在下雨。" },
-  { id: 255, word: "နေပူ", phonetic: "nay pu", meaning: "天气热 / 太阳晒", example: "ဒီနေ့ နေပူပါတယ်။", exampleCn: "今天很热。" },
-  { id: 256, word: "အေးတယ်", phonetic: "ay de", meaning: "冷", example: "ဒီနေ့ အေးတယ်။", exampleCn: "今天冷。" },
-  { id: 257, word: "မိုးရွာ", phonetic: "moe ywar", meaning: "下雨", example: "မိုးရွာရင် မလာပါဘူး။", exampleCn: "如果下雨，我不来。" },
-  { id: 258, word: "ထီး", phonetic: "hti", meaning: "伞", example: "ထီး ဝယ်ချင်ပါတယ်။", exampleCn: "我想买伞。" },
-  { id: 259, word: "အဝတ်အစား", phonetic: "a wut a sa", meaning: "衣服", example: "အဝတ်အစား ဝယ်ချင်ပါတယ်။", exampleCn: "我想买衣服。" },
-  { id: 260, word: "ဖိနပ်", phonetic: "hpa nat", meaning: "鞋", example: "ဖိနပ် ဘယ်လောက်လဲ။", exampleCn: "鞋多少钱？" },
-  { id: 261, word: "အိတ်", phonetic: "eik", meaning: "包 / 袋子", example: "အိတ် ပေးပါ။", exampleCn: "请给我袋子。" },
-  { id: 262, word: "ပိုက်ဆံအိတ်", phonetic: "paik hsan eik", meaning: "钱包", example: "ပိုက်ဆံအိတ် ပျောက်သွားပါတယ်။", exampleCn: "钱包丢了。" },
-  { id: 263, word: "အရောင်", phonetic: "a yaung", meaning: "颜色", example: "အရောင် ဘာရှိပါသလဲ။", exampleCn: "有什么颜色？" },
-  { id: 264, word: "အနီ", phonetic: "a ni", meaning: "红色", example: "အနီရောင် လိုချင်ပါတယ်။", exampleCn: "我想要红色。" },
-  { id: 265, word: "အပြာ", phonetic: "a pya", meaning: "蓝色", example: "အပြာ ရှိပါသလား။", exampleCn: "有蓝色吗？" },
-  { id: 266, word: "အဖြူ", phonetic: "a phyu", meaning: "白色", example: "အဖြူ မလိုပါဘူး။", exampleCn: "不需要白色。" },
-  { id: 267, word: "အမည်း", phonetic: "a me", meaning: "黑色", example: "အမည်း ဝယ်ချင်ပါတယ်။", exampleCn: "我想买黑色。" },
-  { id: 268, word: "အပြည့်", phonetic: "a pye", meaning: "满 / 完整", example: "ဖောင် အပြည့် ဖြည့်ပါ။", exampleCn: "请完整填写表格。" },
-  { id: 269, word: "တစ်ဝက်", phonetic: "ta wet", meaning: "一半", example: "တစ်ဝက် ပေးပါ။", exampleCn: "请给一半。" },
-  { id: 270, word: "အားလုံး", phonetic: "arr lone", meaning: "全部", example: "အားလုံး ယူပါ။", exampleCn: "请全部拿走。" },
-  { id: 271, word: "အချို့", phonetic: "a cho", meaning: "一些", example: "အချို့ပဲ လိုပါတယ်။", exampleCn: "只需要一些。" },
-  { id: 272, word: "နောက်တစ်ခု", phonetic: "nauk ta khu", meaning: "另一个 / 下一个", example: "နောက်တစ်ခု ပြပါ။", exampleCn: "请给我看另一个。" },
-  { id: 273, word: "အတူတူ", phonetic: "a tu tu", meaning: "一起 / 一样", example: "အတူတူ သွားမယ်။", exampleCn: "一起去。" },
-  { id: 274, word: "မတူပါဘူး", phonetic: "ma tu ba bu", meaning: "不一样", example: "ဒီနှစ်ခု မတူပါဘူး။", exampleCn: "这两个不一样。" },
-  { id: 275, word: "တူပါတယ်", phonetic: "tu ba de", meaning: "一样", example: "အရောင် တူပါတယ်။", exampleCn: "颜色一样。" },
-  { id: 276, word: "ထက်", phonetic: "htet", meaning: "比", example: "ဒီဟာ အဲဒါထက် ကောင်းပါတယ်။", exampleCn: "这个比那个好。" },
-  { id: 277, word: "ပို", phonetic: "po", meaning: "更 / 多一点", example: "ပို ကြီးတာ ရှိပါသလား။", exampleCn: "有更大的吗？" },
-  { id: 278, word: "လျော့", phonetic: "shaut", meaning: "减少 / 便宜", example: "စျေး လျော့ပေးပါ။", exampleCn: "请便宜一点。" },
-  { id: 279, word: "စမ်းကြည့်", phonetic: "san kyi", meaning: "试试看", example: "စမ်းကြည့်လို့ရမလား။", exampleCn: "可以试试看吗？" },
-  { id: 280, word: "အသုံးပြု", phonetic: "a thone pyu", meaning: "使用", example: "ဘယ်လို အသုံးပြုရမလဲ။", exampleCn: "怎么使用？" },
-  { id: 281, word: "သင်ပေးပါ", phonetic: "thin pay ba", meaning: "请教我", example: "ဒီစကားလုံး သင်ပေးပါ။", exampleCn: "请教我这个词。" },
-  { id: 282, word: "ပြောပြပါ", phonetic: "pyaw pya ba", meaning: "请告诉我", example: "လမ်း ပြောပြပါ။", exampleCn: "请告诉我路怎么走。" },
-  { id: 283, word: "ရှင်းပြပါ", phonetic: "shin pya ba", meaning: "请解释", example: "နည်းနည်း ရှင်းပြပါ။", exampleCn: "请稍微解释一下。" },
-  { id: 284, word: "ရေးပေးပါ", phonetic: "yay pay ba", meaning: "请帮我写", example: "လိပ်စာ ရေးပေးပါ။", exampleCn: "请帮我写地址。" },
-  { id: 285, word: "ဖတ်ပေးပါ", phonetic: "hpat pay ba", meaning: "请帮我读", example: "ဒီစာ ဖတ်ပေးပါ။", exampleCn: "请帮我读这段文字。" },
-  { id: 286, word: "ခေါ်ပေးပါ", phonetic: "khaw pay ba", meaning: "请帮我叫", example: "တက္ကစီ ခေါ်ပေးပါ။", exampleCn: "请帮我叫出租车。" },
-  { id: 287, word: "ပို့ပေးပါ", phonetic: "po pay ba", meaning: "请送 / 请寄", example: "ဟိုတယ်ကို ပို့ပေးပါ။", exampleCn: "请送我去酒店。" },
-  { id: 288, word: "သွားပေးပါ", phonetic: "thwa pay ba", meaning: "请帮我去", example: "ကောင်တာကို သွားပေးပါ။", exampleCn: "请帮我去柜台。" },
-  { id: 289, word: "ဝယ်ပေးပါ", phonetic: "we pay ba", meaning: "请帮我买", example: "ရေ ဝယ်ပေးပါ။", exampleCn: "请帮我买水。" },
-  { id: 290, word: "ကြိုပေးပါ", phonetic: "kyo pay ba", meaning: "请来接", example: "လေဆိပ်မှာ ကြိုပေးပါ။", exampleCn: "请到机场接我。" },
-  { id: 291, word: "လေဆိပ်", phonetic: "lay hseik", meaning: "机场", example: "လေဆိပ်ကို သွားချင်ပါတယ်။", exampleCn: "我想去机场。" },
-  { id: 292, word: "ဘူတာ", phonetic: "bu ta", meaning: "车站 / 火车站", example: "ဘူတာ ဘယ်မှာလဲ။", exampleCn: "车站在哪里？" },
-  { id: 293, word: "သင်္ဘော", phonetic: "thin baw", meaning: "船", example: "သင်္ဘောနဲ့ သွားမယ်။", exampleCn: "我要坐船去。" },
-  { id: 294, word: "လက်မှတ်ဝယ်", phonetic: "let hmat we", meaning: "买票", example: "လက်မှတ်ဝယ်ချင်ပါတယ်။", exampleCn: "我想买票。" },
-  { id: 295, word: "သွားမယ့်နေရာ", phonetic: "thwa me nay ya", meaning: "目的地", example: "သွားမယ့်နေရာ ဘယ်မှာလဲ။", exampleCn: "目的地在哪里？" },
-  { id: 296, word: "ရောက်ပါပြီ", phonetic: "yauk ba byi", meaning: "到了", example: "ဟိုတယ် ရောက်ပါပြီ။", exampleCn: "到酒店了。" },
-  { id: 297, word: "မရောက်သေးပါဘူး", phonetic: "ma yauk thay ba bu", meaning: "还没到", example: "ရုံး မရောက်သေးပါဘူး။", exampleCn: "还没到办公室。" },
-  { id: 298, word: "ဆင်းပါမယ်", phonetic: "hsin ba me", meaning: "我要下车", example: "နောက်မှတ်တိုင်မှာ ဆင်းပါမယ်။", exampleCn: "我在下一站下车。" },
-  { id: 299, word: "တက်ပါမယ်", phonetic: "tet ba me", meaning: "我要上车", example: "ဒီဘတ်စ်ကား တက်ပါမယ်။", exampleCn: "我要上这辆公交车。" },
-  { id: 300, word: "ရောက်ရင် ပြောပါ", phonetic: "yauk yin pyaw ba", meaning: "到了请告诉我", example: "ရောက်ရင် ပြောပါ။", exampleCn: "到了请告诉我。" }
-];
-
-(function () {
-  var items = [
-    { my: "နိုင်ငံကူးလက်မှတ်", cn: "护照", cat: "政府办事" },
-    { my: "ဗီဇာ", cn: "签证", cat: "政府办事" },
-    { my: "မှတ်ပုံတင်", cn: "身份证", cat: "政府办事" },
-    { my: "ဖောင်", cn: "表格", cat: "政府办事" },
-    { my: "မိတ္တူ", cn: "复印件", cat: "政府办事" },
-    { my: "လက်မှတ်", cn: "签名 / 票", cat: "政府办事" },
-    { my: "ရက်ချိန်း", cn: "预约 / 日期", cat: "政府办事" },
-    { my: "တန်းစီနံပါတ်", cn: "排队号码", cat: "政府办事" },
-    { my: "ကောင်တာ", cn: "柜台", cat: "政府办事" },
-    { my: "ပြေစာ", cn: "收据", cat: "政府办事" },
-    { my: "ဝန်ဆောင်ခ", cn: "手续费", cat: "政府办事" },
-    { my: "အခွန်", cn: "税费", cat: "政府办事" },
-    { my: "ဒဏ်ငွေ", cn: "罚款", cat: "政府办事" },
-    { my: "ထောက်ခံစာ", cn: "证明信", cat: "政府办事" },
-    { my: "အိမ်ထောင်စုစာရင်း", cn: "户口 / 家庭登记", cat: "政府办事" },
-    { my: "လိပ်စာ", cn: "地址", cat: "政府办事" },
-    { my: "ရုံး", cn: "办公室 / 政府部门", cat: "政府办事" },
-    { my: "တာဝန်ရှိသူ", cn: "负责人", cat: "政府办事" },
-    { my: "ခွင့်ပြုချက်", cn: "许可 / 批准", cat: "政府办事" },
-    { my: "လိုင်စင်", cn: "许可证 / 驾照", cat: "政府办事" },
-    { my: "ဘဏ်အကောင့်", cn: "银行账户", cat: "银行支付" },
-    { my: "ငွေလွှဲ", cn: "转账", cat: "银行支付" },
-    { my: "ငွေထုတ်", cn: "取钱", cat: "银行支付" },
-    { my: "ငွေသွင်း", cn: "存钱", cat: "银行支付" },
-    { my: "အတိုး", cn: "利息", cat: "银行支付" },
-    { my: "ကတ်", cn: "银行卡 / 卡", cat: "银行支付" },
-    { my: "စကားဝှက်", cn: "密码", cat: "银行支付" },
-    { my: "ငွေလက်ခံ", cn: "收款", cat: "银行支付" },
-    { my: "ငွေပေးချေ", cn: "付款", cat: "银行支付" },
-    { my: "အွန်လိုင်းပေးချေမှု", cn: "线上支付", cat: "银行支付" },
-    { my: "ဆင်းမ်ကတ်", cn: "手机卡", cat: "手机通信" },
-    { my: "ဖုန်းဘေလ်", cn: "话费", cat: "手机通信" },
-    { my: "အင်တာနက်", cn: "网络", cat: "手机通信" },
-    { my: "ဒေတာ", cn: "流量", cat: "手机通信" },
-    { my: "ဖုန်းနံပါတ်", cn: "电话号码", cat: "手机通信" },
-    { my: "မက်ဆေ့ခ်ျ", cn: "短信", cat: "手机通信" },
-    { my: "ခေါ်ဆိုမှု", cn: "电话通话", cat: "手机通信" },
-    { my: "ဝိုင်ဖိုင်", cn: "Wi-Fi", cat: "手机通信" },
-    { my: "အားသွင်းကြိုး", cn: "充电线", cat: "手机通信" },
-    { my: "အားသွင်းစက်", cn: "充电器", cat: "手机通信" },
-    { my: "ဆေးရုံ", cn: "医院", cat: "医疗药店" },
-    { my: "ဆေးခန်း", cn: "诊所", cat: "医疗药店" },
-    { my: "ဆရာဝန်", cn: "医生", cat: "医疗药店" },
-    { my: "သူနာပြု", cn: "护士", cat: "医疗药店" },
-    { my: "ဆေးဆိုင်", cn: "药店", cat: "医疗药店" },
-    { my: "ဆေး", cn: "药", cat: "医疗药店" },
-    { my: "ဆေးစာ", cn: "处方", cat: "医疗药店" },
-    { my: "အဖျား", cn: "发烧", cat: "医疗药店" },
-    { my: "ခေါင်းကိုက်", cn: "头痛", cat: "医疗药店" },
-    { my: "ဗိုက်နာ", cn: "肚子痛", cat: "医疗药店" },
-    { my: "ချောင်းဆိုး", cn: "咳嗽", cat: "医疗药店" },
-    { my: "အာမခံ", cn: "保险", cat: "医疗药店" },
-    { my: "ဟိုတယ်", cn: "酒店", cat: "住宿租房" },
-    { my: "အခန်း", cn: "房间", cat: "住宿租房" },
-    { my: "သော့", cn: "钥匙", cat: "住宿租房" },
-    { my: "ရေချိုးခန်း", cn: "浴室", cat: "住宿租房" },
-    { my: "မီး", cn: "电 / 灯", cat: "住宿租房" },
-    { my: "ရေ", cn: "水", cat: "住宿租房" },
-    { my: "ငှားခ", cn: "租金", cat: "住宿租房" },
-    { my: "အိမ်ရှင်", cn: "房东", cat: "住宿租房" },
-    { my: "သန့်ရှင်းရေး", cn: "清洁", cat: "住宿租房" },
-    { my: "ပြင်ဆင်", cn: "维修", cat: "住宿租房" },
-    { my: "တက္ကစီ", cn: "出租车", cat: "交通出行" },
-    { my: "ဘတ်စ်ကား", cn: "公交车", cat: "交通出行" },
-    { my: "ရထား", cn: "火车", cat: "交通出行" },
-    { my: "မှတ်တိုင်", cn: "车站 / 站点", cat: "交通出行" },
-    { my: "လမ်းဆုံ", cn: "路口", cat: "交通出行" },
-    { my: "ဘယ်ဘက်", cn: "左边", cat: "交通出行" },
-    { my: "ညာဘက်", cn: "右边", cat: "交通出行" },
-    { my: "တည့်တည့်", cn: "直走", cat: "交通出行" },
-    { my: "အနီး", cn: "附近", cat: "交通出行" },
-    { my: "အဝေး", cn: "远处", cat: "交通出行" },
-    { my: "ဈေး", cn: "市场 / 价格", cat: "购物吃饭" },
-    { my: "ဆိုင်", cn: "商店", cat: "购物吃饭" },
-    { my: "လျှော့ဈေး", cn: "折扣", cat: "购物吃饭" },
-    { my: "အရွယ်အစား", cn: "尺寸", cat: "购物吃饭" },
-    { my: "အရောင်", cn: "颜色", cat: "购物吃饭" },
-    { my: "အထုပ်", cn: "袋子 / 包", cat: "购物吃饭" },
-    { my: "စားသောက်ဆိုင်", cn: "餐厅", cat: "购物吃饭" },
-    { my: "မီနူး", cn: "菜单", cat: "购物吃饭" },
-    { my: "ထမင်း", cn: "米饭", cat: "购物吃饭" },
-    { my: "ဟင်း", cn: "菜 / 咖喱", cat: "购物吃饭" },
-    { my: "အချို", cn: "甜", cat: "购物吃饭" },
-    { my: "အစပ်", cn: "辣", cat: "购物吃饭" },
-    { my: "ရေခဲ", cn: "冰", cat: "购物吃饭" },
-    { my: "အလုပ်", cn: "工作", cat: "工作社交" },
-    { my: "အစည်းအဝေး", cn: "会议", cat: "工作社交" },
-    { my: "သူငယ်ချင်း", cn: "朋友", cat: "工作社交" },
-    { my: "မိသားစု", cn: "家人", cat: "工作社交" },
-    { my: "အချိန်", cn: "时间", cat: "工作社交" },
-    { my: "မနက်ဖြန်", cn: "明天", cat: "工作社交" },
-    { my: "မနေ့က", cn: "昨天", cat: "工作社交" },
-    { my: "အရေးကြီး", cn: "重要", cat: "工作社交" },
-    { my: "အမြန်", cn: "快 / 紧急", cat: "工作社交" },
-    { my: "ဖြည်းဖြည်း", cn: "慢慢地", cat: "工作社交" },
-    { my: "ရဲစခန်း", cn: "警察局", cat: "紧急情况" },
-    { my: "မီးသတ်", cn: "消防", cat: "紧急情况" },
-    { my: "အရေးပေါ်", cn: "紧急", cat: "紧急情况" },
-    { my: "ကူညီပါ", cn: "请帮忙", cat: "紧急情况" },
-    { my: "ပျောက်သွား", cn: "丢失了", cat: "紧急情况" }
-  ];
-
-  var patterns = [
-    function (item) {
-      return { word: item.my, meaning: item.cn, example: "ဒီဟာ " + item.my + " ပါ။", exampleCn: "这是" + item.cn + "。" };
-    },
-    function (item) {
-      return { word: item.my + " လိုပါတယ်", meaning: "需要" + item.cn, example: item.my + " လိုပါတယ်။", exampleCn: "我需要" + item.cn + "。" };
-    },
-    function (item) {
-      return { word: item.my + " ဘယ်မှာလဲ", meaning: item.cn + "在哪里", example: item.my + " ဘယ်မှာလဲ။", exampleCn: item.cn + "在哪里？" };
-    },
-    function (item) {
-      return { word: item.my + " ရှိပါသလား", meaning: "有" + item.cn + "吗", example: item.my + " ရှိပါသလား။", exampleCn: "有" + item.cn + "吗？" };
-    },
-    function (item) {
-      return { word: item.my + " အတွက် အကူအညီ လိုပါတယ်", meaning: "关于" + item.cn + "需要帮助", example: item.my + " အတွက် အကူအညီ လိုပါတယ်။", exampleCn: "关于" + item.cn + "我需要帮助。" };
-    },
-    function (item) {
-      return { word: item.my + " ကို နားမလည်ပါဘူး", meaning: "不明白" + item.cn, example: item.my + " ကို နားမလည်ပါဘူး။", exampleCn: "我不明白" + item.cn + "。" };
-    },
-    function (item) {
-      return { word: item.my + " နဲ့ ပတ်သက်ပြီး ပြောပြပါ", meaning: "请说明关于" + item.cn + "的事情", example: item.my + " နဲ့ ပတ်သက်ပြီး ပြောပြပါ။", exampleCn: "请说明关于" + item.cn + "的事情。" };
-    }
-  ];
-
-  var generated = [];
-  var id = 301;
-  for (var i = 0; i < items.length && id <= 1000; i += 1) {
-    for (var p = 0; p < patterns.length && id <= 1000; p += 1) {
-      var phrase = patterns[p](items[i]);
-      generated.push({
-        id: id,
-        word: phrase.word,
-        phonetic: "",
-        meaning: phrase.meaning,
-        example: phrase.example,
-        exampleCn: phrase.exampleCn,
-        category: items[i].cat
-      });
-      id += 1;
-    }
-  }
-
-  window.EXTRA_WORDS = (window.EXTRA_WORDS || []).concat(generated);
-})();
-
-window.LISTENING_STORIES = [
-  {
-    title: "办证窗口",
-    lines: [
-      { my: "မင်္ဂလာပါ၊ မှတ်ပုံတင် မိတ္တူ လိုပါတယ်။", cn: "你好，我需要身份证复印件。" },
-      { my: "ဖောင်ကို ဒီမှာ ဖြည့်ပါ။", cn: "请在这里填写表格。" },
-      { my: "လက်မှတ် ဒီနေရာမှာ ထိုးပါ။", cn: "请在这里签名。" },
-      { my: "ပြေစာကို သိမ်းထားပါ။", cn: "请保留收据。" },
-      { my: "မနက်ဖြန် ပြန်လာပါ။", cn: "请明天再来。" },
-      { my: "ကျေးဇူးတင်ပါတယ်၊ နားလည်ပါပြီ။", cn: "谢谢，我明白了。" }
-    ]
-  },
-  {
-    title: "打车去办公室",
-    lines: [
-      { my: "တက္ကစီ ခေါ်ပေးပါ။", cn: "请帮我叫出租车。" },
-      { my: "ဒီလိပ်စာကို သွားချင်ပါတယ်။", cn: "我想去这个地址。" },
-      { my: "ဘယ်လောက်ကျသလဲ။", cn: "多少钱？" },
-      { my: "နည်းနည်း လျှော့ပေးပါ။", cn: "请便宜一点。" },
-      { my: "ရောက်ရင် ပြောပါ။", cn: "到了请告诉我。" },
-      { my: "ဒီမှာ ဆင်းပါမယ်။", cn: "我在这里下车。" }
-    ]
-  },
-  {
-    title: "市场买东西",
-    lines: [
-      { my: "ဒီဟာ ဘယ်လောက်လဲ။", cn: "这个多少钱？" },
-      { my: "နှစ်ခု ယူပါမယ်။", cn: "我要两个。" },
-      { my: "လျှော့ဈေး ရှိပါသလား။", cn: "有折扣吗？" },
-      { my: "အထုပ် တစ်ခု ပေးပါ။", cn: "请给我一个袋子。" },
-      { my: "ငွေပေးချေပါမယ်။", cn: "我要付款。" },
-      { my: "ကျေးဇူးတင်ပါတယ်။", cn: "谢谢。" }
-    ]
-  },
-  {
-    title: "餐厅点餐",
-    lines: [
-      { my: "မီနူး ပေးပါ။", cn: "请给我菜单。" },
-      { my: "ဒီဟင်းက အစပ်လား။", cn: "这道菜辣吗？" },
-      { my: "အစပ် မစားနိုင်ပါဘူး။", cn: "我不能吃辣。" },
-      { my: "ရေတစ်ခွက် ပေးပါ။", cn: "请给我一杯水。" },
-      { my: "ထုပ်ပေးပါ။", cn: "请打包。" },
-      { my: "ငွေရှင်းပါမယ်။", cn: "我要结账。" }
-    ]
-  },
-  {
-    title: "药店买药",
-    lines: [
-      { my: "ခေါင်းကိုက်ပါတယ်။", cn: "我头痛。" },
-      { my: "ဆေး ရှိပါသလား။", cn: "有药吗？" },
-      { my: "ဘယ်လို သောက်ရမလဲ။", cn: "应该怎么吃？" },
-      { my: "တစ်နေ့ ဘယ်နှစ်ကြိမ် သောက်ရမလဲ။", cn: "一天吃几次？" },
-      { my: "ဘေးထွက်ဆိုးကျိုး ရှိပါသလား။", cn: "有副作用吗？" },
-      { my: "ကျေးဇူးတင်ပါတယ်။", cn: "谢谢。" }
-    ]
-  },
-  {
-    title: "酒店入住",
-    lines: [
-      { my: "အခန်း ကြိုတင်မှာထားပါတယ်။", cn: "我预订了房间。" },
-      { my: "နိုင်ငံကူးလက်မှတ် ပေးပါမယ်။", cn: "我给你护照。" },
-      { my: "အခန်းသော့ ပေးပါ။", cn: "请给我房间钥匙。" },
-      { my: "ဝိုင်ဖိုင် စကားဝှက် ဘာလဲ။", cn: "Wi-Fi 密码是什么？" },
-      { my: "မနက်စာ ပါသလား။", cn: "包含早餐吗？" },
-      { my: "မနက်ဖြန် ထွက်ပါမယ်။", cn: "我明天退房。" }
-    ]
-  },
-  {
-    title: "银行开户",
-    lines: [
-      { my: "ဘဏ်အကောင့် ဖွင့်ချင်ပါတယ်။", cn: "我想开银行账户。" },
-      { my: "ဘာစာရွက်စာတမ်း လိုပါသလဲ။", cn: "需要什么文件？" },
-      { my: "ဖောင်ကို ဖြည့်ပါမယ်။", cn: "我来填写表格。" },
-      { my: "ဖုန်းနံပါတ် ဒီမှာ ရေးပါမယ်။", cn: "我把电话号码写在这里。" },
-      { my: "ကတ်ကို ဘယ်တော့ ရမလဲ။", cn: "什么时候能拿到卡？" },
-      { my: "ကျေးဇူးတင်ပါတယ်။", cn: "谢谢。" }
-    ]
-  },
-  {
-    title: "买手机卡",
-    lines: [
-      { my: "ဆင်းမ်ကတ် ဝယ်ချင်ပါတယ်။", cn: "我想买手机卡。" },
-      { my: "အင်တာနက် ဒေတာ လိုပါတယ်။", cn: "我需要上网流量。" },
-      { my: "တစ်လ ဘယ်လောက်ကျသလဲ။", cn: "一个月多少钱？" },
-      { my: "မှတ်ပုံတင် လိုပါသလား။", cn: "需要身份证吗？" },
-      { my: "ဖုန်းထဲ ထည့်ပေးပါ။", cn: "请帮我装到手机里。" },
-      { my: "စမ်းကြည့်ပါမယ်။", cn: "我试一下。" }
-    ]
-  },
-  {
-    title: "问路",
-    lines: [
-      { my: "ဒီနေရာကို သွားချင်ပါတယ်။", cn: "我想去这个地方。" },
-      { my: "ဘယ်လမ်းက သွားရမလဲ။", cn: "应该走哪条路？" },
-      { my: "တည့်တည့် သွားပါ။", cn: "请直走。" },
-      { my: "လမ်းဆုံမှာ ဘယ်ဘက် ချိုးပါ။", cn: "在路口左转。" },
-      { my: "အနီးမှာ ရှိပါသလား။", cn: "在附近吗？" },
-      { my: "ကျေးဇူးတင်ပါတယ်။", cn: "谢谢。" }
-    ]
-  },
-  {
-    title: "看医生",
-    lines: [
-      { my: "ဆရာဝန်နဲ့ တွေ့ချင်ပါတယ်။", cn: "我想见医生。" },
-      { my: "အဖျား ရှိပါတယ်။", cn: "我发烧。" },
-      { my: "ချောင်းဆိုးလည်း ရှိပါတယ်။", cn: "也有咳嗽。" },
-      { my: "ဆေးစာ ပေးပါသလား။", cn: "会给处方吗？" },
-      { my: "ဘယ်အချိန် ပြန်လာရမလဲ။", cn: "什么时候需要回来复诊？" },
-      { my: "နားလည်ပါပြီ။", cn: "我明白了。" }
-    ]
-  },
-  {
-    title: "租房沟通",
-    lines: [
-      { my: "အခန်း ငှားချင်ပါတယ်။", cn: "我想租房间。" },
-      { my: "ငှားခ ဘယ်လောက်လဲ။", cn: "租金多少钱？" },
-      { my: "ရေနဲ့ မီး ပါသလား။", cn: "水电包含吗？" },
-      { my: "အင်တာနက် ရှိပါသလား။", cn: "有网络吗？" },
-      { my: "ပြင်ဆင်ဖို့ လိုပါတယ်။", cn: "需要维修。" },
-      { my: "မနက်ဖြန် ပြန်ကြည့်ပါမယ်။", cn: "我明天再来看。" }
-    ]
-  },
-  {
-    title: "紧急求助",
-    lines: [
-      { my: "ကူညီပါ။", cn: "请帮忙。" },
-      { my: "ဖုန်း ပျောက်သွားပါတယ်။", cn: "我的手机丢了。" },
-      { my: "ရဲစခန်း ဘယ်မှာလဲ။", cn: "警察局在哪里？" },
-      { my: "ဒီလိပ်စာကို သွားချင်ပါတယ်။", cn: "我想去这个地址。" },
-      { my: "ကျွန်တော် မြန်မာစကား နည်းနည်းပဲ ပြောတတ်ပါတယ်။", cn: "我只会说一点缅语。" },
-      { my: "ဖြည်းဖြည်း ပြောပေးပါ။", cn: "请慢一点说。" }
-    ]
-  }
-];
-
 var TEST_COUNT = 10;
+var REVIEW_BATCH_SIZE = 30;
 var STORAGE_KEY = "daily-myanmar-words-state-v11";
 var TTS_PROXY_URL = "https://myanmar-tts.tun173189.workers.dev/tts";
 var DEFAULT_SETTINGS = {
@@ -2198,6 +1740,8 @@ var DEFAULT_SETTINGS = {
 var els = {
   homeView: document.querySelector("#homeView"),
   studyView: document.querySelector("#studyView"),
+  reviewCenter: document.querySelector("#reviewCenter"),
+  listeningCenter: document.querySelector("#listeningCenter"),
   homeTopbar: document.querySelector("#homeTopbar"),
   todayTitle: document.querySelector("#todayTitle"),
   homeProgressText: document.querySelector("#homeProgressText"),
@@ -2228,7 +1772,6 @@ var els = {
   speakExampleButton: document.querySelector("#speakExampleButton"),
   knownButton: document.querySelector("#knownButton"),
   unknownButton: document.querySelector("#unknownButton"),
-  speakButton: document.querySelector("#speakButton"),
   audioStatus: document.querySelector("#audioStatus"),
   donePanel: document.querySelector("#donePanel"),
   summaryText: document.querySelector("#summaryText"),
@@ -2241,6 +1784,14 @@ var els = {
   weeklyReviewButton: document.querySelector("#weeklyReviewButton"),
   weakReviewButton: document.querySelector("#weakReviewButton"),
   homeMistakeButton: document.querySelector("#homeMistakeButton"),
+  reviewTodayMistakesButton: document.querySelector("#reviewTodayMistakesButton"),
+  reviewDueButton: document.querySelector("#reviewDueButton"),
+  reviewWeeklyButton: document.querySelector("#reviewWeeklyButton"),
+  reviewWeakButton: document.querySelector("#reviewWeakButton"),
+  todayMistakeCountText: document.querySelector("#todayMistakeCountText"),
+  dueReviewCountText: document.querySelector("#dueReviewCountText"),
+  weeklyReviewCountText: document.querySelector("#weeklyReviewCountText"),
+  weakReviewCountText: document.querySelector("#weakReviewCountText"),
   settingsButton: document.querySelector("#settingsButton"),
   settingsPanel: document.querySelector("#settingsPanel"),
   closeSettingsButton: document.querySelector("#closeSettingsButton"),
@@ -2252,6 +1803,8 @@ var els = {
   notificationToggle: document.querySelector("#notificationToggle"),
   startListeningTestButton: document.querySelector("#startListeningTestButton"),
   startStoryButton: document.querySelector("#startStoryButton"),
+  listeningTestEntryButton: document.querySelector("#listeningTestEntryButton"),
+  listeningStoryEntryButton: document.querySelector("#listeningStoryEntryButton"),
   weeklyTestDueButton: document.querySelector("#weeklyTestDueButton"),
   testPanel: document.querySelector("#testPanel"),
   testTitleText: document.querySelector("#testTitleText"),
@@ -2300,6 +1853,8 @@ var learningAutoSpeakArmed = false;
 var settingsOpen = false;
 var test = { active: false, listening: false, showWord: true, title: "小测", questions: [], index: 0, score: 0, answered: false, completed: false, kind: "test" };
 var storyState = { active: false, storyIndex: 0, lineIndex: 0, showCn: false, playing: false, audio: null, playState: "idle" };
+var testReturnView = "home";
+var storyReturnView = "home";
 var panelHistoryActive = false;
 var activePanel = "";
 var currentAudio = null;
@@ -2313,10 +1868,10 @@ function bindEvents() {
   els.adjustPlanButton.addEventListener("click", openSettingsView);
   els.studyBackButton.addEventListener("click", closeStudyPanel);
   els.navHomeButton.addEventListener("click", openHomeView);
-  els.navStudyButton.addEventListener("click", startStudyEntry);
-  els.navListeningButton.addEventListener("click", openStoryPractice);
+  els.navStudyButton.addEventListener("click", openReviewCenter);
+  els.navListeningButton.addEventListener("click", openListeningCenter);
   els.navSettingsButton.addEventListener("click", openSettingsView);
-  els.homeMistakeButton.addEventListener("click", reviewMistakes);
+  els.homeMistakeButton.addEventListener("click", openReviewCenter);
   els.cardButton.addEventListener("click", function () {
     flipped = !flipped;
     renderCard();
@@ -2334,7 +1889,6 @@ function bindEvents() {
   });
   els.knownButton.addEventListener("click", function () { answer(true); });
   els.unknownButton.addEventListener("click", function () { answer(false); });
-  els.speakButton.addEventListener("click", speakCurrentWord);
   els.speakExampleButton.addEventListener("click", speakCurrentExample);
   els.speakExampleButton.addEventListener("keydown", function (event) {
     if (event.key === "Enter" || event.key === " ") {
@@ -2347,6 +1901,10 @@ function bindEvents() {
   els.listenTodayButton.addEventListener("click", startTodayListeningReview);
   els.weeklyReviewButton.addEventListener("click", startWeeklyReview);
   els.weakReviewButton.addEventListener("click", reviewWeakWords);
+  if (els.reviewTodayMistakesButton) els.reviewTodayMistakesButton.addEventListener("click", reviewMistakes);
+  if (els.reviewDueButton) els.reviewDueButton.addEventListener("click", startDueReview);
+  if (els.reviewWeeklyButton) els.reviewWeeklyButton.addEventListener("click", startWeeklyReview);
+  if (els.reviewWeakButton) els.reviewWeakButton.addEventListener("click", reviewWeakWords);
   els.settingsButton.addEventListener("click", toggleSettings);
   els.closeSettingsButton.addEventListener("click", closeSettings);
   els.dailyCountSelect.addEventListener("change", updateSettings);
@@ -2357,6 +1915,8 @@ function bindEvents() {
   els.notificationToggle.addEventListener("change", updateSettings);
   els.startListeningTestButton.addEventListener("click", startListeningTest);
   els.startStoryButton.addEventListener("click", openStoryPractice);
+  if (els.listeningTestEntryButton) els.listeningTestEntryButton.addEventListener("click", startListeningTest);
+  if (els.listeningStoryEntryButton) els.listeningStoryEntryButton.addEventListener("click", openStoryPractice);
   els.weeklyTestDueButton.addEventListener("click", startTest);
   els.closeTestButton.addEventListener("click", closeTest);
   els.speakTestButton.addEventListener("click", speakCurrentTestWord);
@@ -2382,6 +1942,7 @@ function loadState() {
     weeklyReviewThrough: "",
     lastWeeklyReviewIds: [],
     lastWeeklyReviewDate: "",
+    pendingWeeklyReview: null,
     activeReview: null
   };
   var saved = null;
@@ -2407,11 +1968,13 @@ function loadState() {
   saved.weeklyReviewThrough = saved.weeklyReviewThrough || "";
   saved.lastWeeklyReviewIds = saved.lastWeeklyReviewIds || [];
   saved.lastWeeklyReviewDate = saved.lastWeeklyReviewDate || "";
+  saved.pendingWeeklyReview = saved.pendingWeeklyReview && saved.pendingWeeklyReview.ids && saved.pendingWeeklyReview.ids.length ? saved.pendingWeeklyReview : null;
   saved.activeReview = saved.activeReview && saved.activeReview.ids && saved.activeReview.ids.length ? saved.activeReview : null;
   if (saved.activeReview) {
     saved.activeReview.answers = saved.activeReview.answers || {};
     saved.activeReview.type = saved.activeReview.type || "review";
     saved.activeReview.sourceThrough = saved.activeReview.sourceThrough || "";
+    saved.activeReview.remainingIds = saved.activeReview.remainingIds || [];
   }
   return saved;
 }
@@ -2471,6 +2034,36 @@ function openHomeView() {
   scrollToTop();
 }
 
+function openReviewCenter() {
+  pauseCurrentAudio();
+  if (test.active) closeTestPanel();
+  if (storyState.active) closeStoryPanel();
+  if (settingsOpen) closeSettingsPanel();
+  if (reviewMode) {
+    cancelReview();
+    return;
+  }
+  currentView = "review";
+  clearPanelHistory("study");
+  render();
+  scrollToTop();
+}
+
+function openListeningCenter() {
+  pauseCurrentAudio();
+  if (test.active) closeTestPanel();
+  if (storyState.active) closeStoryPanel();
+  if (settingsOpen) closeSettingsPanel();
+  if (reviewMode) {
+    cancelReview();
+    return;
+  }
+  currentView = "listening";
+  clearPanelHistory("study");
+  render();
+  scrollToTop();
+}
+
 function openSettingsView() {
   pauseCurrentAudio();
   if (test.active) closeTestPanel();
@@ -2512,11 +2105,23 @@ function buildSession() {
     else learned.push(word);
   }
 
+  due.sort(compareDailyReviewWords);
+  learned.sort(compareDailyReviewWords);
   var candidates = toTypedWords(due, "review").concat(toTypedWords(fresh, "new")).concat(toTypedWords(learned, "review"));
   var picked = candidates.slice(0, state.settings.dailyCount);
   state.days[today] = { ids: getTypedIds(picked), sources: getTypedSources(picked), answers: {}, completed: false };
   saveState();
   return mapTypedWords(picked);
+}
+
+function compareDailyReviewWords(a, b) {
+  var recordA = state.records[a.id] || { level: 0, reviewAfter: "", lastSeen: "" };
+  var recordB = state.records[b.id] || { level: 0, reviewAfter: "", lastSeen: "" };
+  var dueA = recordA.reviewAfter && recordA.reviewAfter <= today ? 0 : 1;
+  var dueB = recordB.reviewAfter && recordB.reviewAfter <= today ? 0 : 1;
+  if (dueA !== dueB) return dueA - dueB;
+  if ((recordA.level || 0) !== (recordB.level || 0)) return (recordA.level || 0) - (recordB.level || 0);
+  return String(recordA.lastSeen || "").localeCompare(String(recordB.lastSeen || ""));
 }
 
 function getIds(words) {
@@ -2571,6 +2176,7 @@ function render() {
   renderSettings();
   renderLearningOverview();
   renderWeeklyPanel();
+  renderReviewCenter();
   renderMode();
   renderCard();
   renderTest();
@@ -2583,10 +2189,14 @@ function renderMode() {
   var day = state.days[today];
   var dailyDone = !!(day && day.completed);
   var homeVisible = !testOpen && !storyOpen && !settingsOpen && !reviewMode && currentView === "home";
+  var reviewVisible = !testOpen && !storyOpen && !settingsOpen && !reviewMode && currentView === "review";
+  var listeningVisible = !testOpen && !storyOpen && !settingsOpen && !reviewMode && currentView === "listening";
   var studyVisible = !testOpen && !storyOpen && !settingsOpen && (reviewMode || currentView === "study");
   var bottomVisible = !testOpen && !storyOpen && !studyVisible;
 
   toggleHidden(els.homeView, !homeVisible);
+  toggleHidden(els.reviewCenter, !reviewVisible);
+  toggleHidden(els.listeningCenter, !listeningVisible);
   if (els.homeView) els.homeView.classList.toggle("day-complete", dailyDone);
   toggleHidden(els.studyView, !studyVisible);
   toggleHidden(els.weeklyReviewPanel, !homeVisible || (!isWeeklyReviewDue() && !isTestDue()));
@@ -2608,7 +2218,7 @@ function renderNav() {
   if (!els.bottomNav) return;
   var active = settingsOpen ? "settings" : currentView;
   els.navHomeButton.classList.toggle("active", active === "home");
-  els.navStudyButton.classList.toggle("active", active === "study");
+  els.navStudyButton.classList.toggle("active", active === "review");
   els.navListeningButton.classList.toggle("active", active === "listening");
   els.navSettingsButton.classList.toggle("active", active === "settings");
 }
@@ -2728,6 +2338,7 @@ function startChoiceTest(pool, listening, title, kind) {
   pauseStoryAudio();
   closeStoryPanel();
   closeSettingsPanel();
+  testReturnView = kind === "listening" ? "listening" : "home";
   currentView = listening ? "listening" : "home";
   test = { active: true, listening: listening, showWord: !listening, title: title, questions: [], index: 0, score: 0, answered: false, completed: false, kind: kind || "test" };
   pushPanelHistory("test");
@@ -2749,13 +2360,14 @@ function closeTestPanel() {
   test.active = false;
   test.completed = false;
   clearPanelHistory("test");
-  currentView = "home";
+  currentView = testReturnView || "home";
   render();
   scrollToTop();
 }
 
 function openStoryPractice() {
   if (!window.LISTENING_STORIES || !window.LISTENING_STORIES.length) return;
+  storyReturnView = currentView === "listening" ? "listening" : "home";
   pauseCurrentAudio();
   closeTestPanel();
   closeSettingsPanel();
@@ -2779,7 +2391,7 @@ function closeStoryPanel() {
   pauseStoryAudio();
   storyState.active = false;
   clearPanelHistory("story");
-  currentView = "home";
+  currentView = storyReturnView || "home";
   render();
   scrollToTop();
 }
@@ -3168,6 +2780,27 @@ function renderLearningOverview() {
   }
 }
 
+function renderReviewCenter() {
+  var todayMistakes = getTodayNeedsReviewIds();
+  var dueIds = getDueReviewIds();
+  var weeklySource = getWeeklyReviewSource();
+  var weeklyIds = getWeeklyReviewPendingIds(weeklySource);
+  var weakIds = getWeakWordIds();
+  updateReviewOption(els.reviewTodayMistakesButton, els.todayMistakeCountText, todayMistakes.length, "复习今日错词");
+  updateReviewOption(els.reviewDueButton, els.dueReviewCountText, dueIds.length, "复习到期词");
+  updateReviewOption(els.reviewWeeklyButton, els.weeklyReviewCountText, weeklyIds.length, state.pendingWeeklyReview && state.pendingWeeklyReview.ids && state.pendingWeeklyReview.ids.length ? "继续本周复习" : "开始本周复习");
+  updateReviewOption(els.reviewWeakButton, els.weakReviewCountText, weakIds.length, "复习薄弱词");
+}
+
+function updateReviewOption(button, countElement, count, activeText) {
+  if (countElement) countElement.textContent = count ? count + " 个" : "暂无";
+  if (!button) return;
+  button.disabled = !count;
+  button.classList.toggle("disabled", !count);
+  var title = button.querySelector("strong");
+  if (title && activeText) title.textContent = count ? activeText : title.getAttribute("data-empty") || title.textContent;
+}
+
 function countLearnedWords(words) {
   var count = 0;
   for (var i = 0; i < words.length; i += 1) {
@@ -3267,11 +2900,11 @@ function renderTestComplete() {
   var closeButton = document.createElement("button");
   closeButton.className = "primary full";
   closeButton.type = "button";
-  closeButton.textContent = test.kind === "listening" ? "回到听力练习" : "回到首页";
+  closeButton.textContent = test.kind === "listening" ? "回到听力" : "回到首页";
   closeButton.addEventListener("click", function () {
     if (test.kind === "listening") {
       closeTestPanel();
-      openStoryPractice();
+      openListeningCenter();
     } else {
       closeTest(false);
     }
@@ -3426,10 +3059,19 @@ function forceAutoSpeak(key, text) {
 function reviewMistakes() {
   var wrongIds = getTodayNeedsReviewIds();
   if (!wrongIds.length) {
-    renderCard();
+    renderReviewCenter();
     return;
   }
   startReview(wrongIds, "mistakes");
+}
+
+function startDueReview() {
+  var dueIds = getDueReviewIds().slice(0, REVIEW_BATCH_SIZE);
+  if (!dueIds.length) {
+    renderReviewCenter();
+    return;
+  }
+  startReview(dueIds, "due");
 }
 
 function getTodayWrongIds() {
@@ -3488,7 +3130,14 @@ function reviewTodayWords() {
 
 function startWeeklyReview() {
   var source = getWeeklyReviewSource();
-  startReview(prioritizeReviewIds(source.ids), "weekly", { sourceThrough: source.through });
+  var ids = getWeeklyReviewPendingIds(source);
+  var batch = ids.slice(0, REVIEW_BATCH_SIZE);
+  var remaining = ids.slice(REVIEW_BATCH_SIZE);
+  if (!batch.length) {
+    renderReviewCenter();
+    return;
+  }
+  startReview(batch, "weekly", { sourceThrough: source.through, remainingIds: remaining });
 }
 
 function reviewWeakWords() {
@@ -3508,7 +3157,8 @@ function startReview(ids, type, options) {
     ids: getIds(session),
     answers: {},
     started: today,
-    sourceThrough: options && options.sourceThrough ? options.sourceThrough : ""
+    sourceThrough: options && options.sourceThrough ? options.sourceThrough : "",
+    remainingIds: options && options.remainingIds ? uniqueIds(options.remainingIds) : []
   };
   state.activeReview = reviewSession;
   index = 0;
@@ -3522,9 +3172,14 @@ function startReview(ids, type, options) {
 function finishReview() {
   var finished = reviewSession;
   if (finished && finished.type === "weekly" && finished.sourceThrough) {
-    state.weeklyReviewThrough = finished.sourceThrough;
-    state.lastWeeklyReviewIds = finished.ids.slice();
+    state.lastWeeklyReviewIds = uniqueIds((state.lastWeeklyReviewIds || []).concat(finished.ids));
     state.lastWeeklyReviewDate = today;
+    if (finished.remainingIds && finished.remainingIds.length) {
+      state.pendingWeeklyReview = { ids: finished.remainingIds.slice(), sourceThrough: finished.sourceThrough };
+    } else {
+      state.pendingWeeklyReview = null;
+      state.weeklyReviewThrough = finished.sourceThrough;
+    }
   }
   state.activeReview = null;
   reviewSession = null;
@@ -3580,8 +3235,19 @@ function getTodayIds() {
   return state.days[today] && state.days[today].ids ? state.days[today].ids : [];
 }
 
+function getDueReviewIds() {
+  var ids = [];
+  var wordPool = getSelectedWords();
+  for (var i = 0; i < wordPool.length; i += 1) {
+    var record = state.records[wordPool[i].id];
+    if (record && record.reviewAfter && record.reviewAfter <= today) ids.push(wordPool[i].id);
+  }
+  return prioritizeReviewIds(ids);
+}
+
 function renderWeeklyPanel() {
   var source = getWeeklyReviewSource();
+  var weeklyIds = getWeeklyReviewPendingIds(source);
   var reviewDue = isWeeklyReviewDue();
   var testDue = isTestDue();
   var weakCount = getWeakWordIds().length;
@@ -3590,6 +3256,9 @@ function renderWeeklyPanel() {
     els.weeklyReviewSummary.textContent = reviewDue
       ? "这段时间学了 " + source.ids.length + " 个词，先完整复习一遍，再做小测。"
       : "已经完成一轮学习，做一次小测看看掌握得怎么样。";
+  }
+  if (els.weeklyReviewSummary && reviewDue) {
+    els.weeklyReviewSummary.textContent = "这段时间有 " + weeklyIds.length + " 个词待复习，每次先复习 " + Math.min(REVIEW_BATCH_SIZE, weeklyIds.length) + " 个。";
   }
   toggleHidden(els.weeklyReviewButton, !reviewDue);
   if (els.weakReviewButton) {
@@ -3612,8 +3281,17 @@ function getWeeklyReviewSource() {
   return { days: days, ids: uniqueIds(ids), through: days.length ? days[days.length - 1] : "" };
 }
 
+function getWeeklyReviewPendingIds(source) {
+  var pending = state.pendingWeeklyReview;
+  if (pending && pending.sourceThrough === source.through && pending.ids && pending.ids.length) {
+    return prioritizeReviewIds(pending.ids);
+  }
+  return prioritizeReviewIds(source.ids);
+}
+
 function isWeeklyReviewDue() {
-  return getWeeklyReviewSource().days.length >= state.settings.testInterval;
+  var source = getWeeklyReviewSource();
+  return !!(state.pendingWeeklyReview && state.pendingWeeklyReview.ids && state.pendingWeeklyReview.ids.length) || source.days.length >= state.settings.testInterval;
 }
 
 function getCompletedDayKeysAfter(dateKey) {
@@ -3681,6 +3359,7 @@ function getReviewLabel() {
   if (!reviewSession) return "复习进度";
   if (reviewSession.type === "weekly") return "本周复习";
   if (reviewSession.type === "weak") return "弱项复习";
+  if (reviewSession.type === "due") return "到期复习";
   if (reviewSession.type === "mistakes") return "错词复习";
   return "今日复习";
 }
@@ -3712,9 +3391,15 @@ function registerServiceWorker() {
   }
 }
 
+
+
     </script>
   </body>
 </html>
+
+
+
+
 
 
 

@@ -362,8 +362,8 @@ p {
 }
 
 .round-icon {
-  width: 36px;
-  height: 36px;
+  width: 34px;
+  height: 34px;
   grid-row: 1 / span 3;
   margin-bottom: 0;
   border-radius: 50%;
@@ -377,6 +377,7 @@ p {
 
 .stat-card p {
   grid-column: 2;
+  min-width: 0;
   color: #3b4652;
   font-size: 13px;
   font-weight: 750;
@@ -386,16 +387,17 @@ p {
 .stat-card strong {
   grid-column: 2;
   display: block;
+  min-width: 0;
   margin-top: 0;
   color: #0d1d29;
-  font-size: 20px;
+  font-size: clamp(18px, 5vw, 20px);
   line-height: 1.1;
   font-weight: 850;
   white-space: nowrap;
 }
 
 #learnedTotalText {
-  font-size: 18px;
+  font-size: clamp(16px, 4.5vw, 18px);
   white-space: nowrap;
 }
 
@@ -426,6 +428,91 @@ p {
   background: var(--paper);
   border: 1px solid var(--line);
   box-shadow: var(--soft-shadow);
+}
+
+.review-center,
+.listening-center {
+  min-height: 100dvh;
+  padding: calc(18px + env(safe-area-inset-top)) 16px calc(86px + env(safe-area-inset-bottom));
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.72), rgba(250, 247, 241, 0.96)),
+    var(--page);
+}
+
+.simple-page-head {
+  display: grid;
+  gap: 6px;
+  margin: 0 0 16px;
+}
+
+.simple-page-head h2 {
+  color: var(--color-text);
+  font-size: 24px;
+  line-height: 1.25;
+  font-weight: 800;
+}
+
+.simple-page-head p:not(.eyebrow) {
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.review-options {
+  display: grid;
+  gap: 12px;
+}
+
+.review-option {
+  min-height: 70px;
+  display: grid;
+  grid-template-columns: 50px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--paper);
+  text-align: left;
+  box-shadow: var(--soft-shadow);
+}
+
+.review-option strong,
+.review-option small {
+  display: block;
+  min-width: 0;
+}
+
+.review-option strong {
+  color: var(--color-text);
+  font-size: 16px;
+  font-weight: 800;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.review-option small {
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+.review-option b {
+  color: var(--green-dark);
+  font-size: 15px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.review-option.disabled {
+  opacity: 0.72;
+  box-shadow: none;
+}
+
+.review-option:disabled {
+  cursor: default;
 }
 
 .recommend-entry {
@@ -800,17 +887,6 @@ p {
   flex: 0 0 auto;
 }
 
-.speak {
-  display: none;
-  width: 64px;
-  height: 64px;
-  border-radius: 50%;
-  background: white;
-  color: var(--green);
-  font-size: 26px;
-  box-shadow: var(--soft-shadow);
-}
-
 .audio-status {
   min-height: 18px;
   color: var(--muted);
@@ -1157,7 +1233,9 @@ button:disabled {
   .study-view,
   .test-panel,
   .story-panel,
-  .settings-panel {
+  .settings-panel,
+  .review-center,
+  .listening-center {
     padding-inline: 14px;
   }
 

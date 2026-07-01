@@ -1,7 +1,7 @@
 ﻿{
   "name": "缅语记单词",
   "short_name": "缅语记词",
-  "start_url": "./index.html?v=38",
+  "start_url": "./index.html?v=40",
   "display": "standalone",
   "background_color": "#f7f3ea",
   "theme_color": "#f7f3ea",

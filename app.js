@@ -1,4 +1,5 @@
-var TEST_COUNT = 10;
+﻿var TEST_COUNT = 10;
+var REVIEW_BATCH_SIZE = 30;
 var STORAGE_KEY = "daily-myanmar-words-state-v11";
 var TTS_PROXY_URL = "https://myanmar-tts.tun173189.workers.dev/tts";
 var DEFAULT_SETTINGS = {
@@ -13,6 +14,8 @@ var DEFAULT_SETTINGS = {
 var els = {
   homeView: document.querySelector("#homeView"),
   studyView: document.querySelector("#studyView"),
+  reviewCenter: document.querySelector("#reviewCenter"),
+  listeningCenter: document.querySelector("#listeningCenter"),
   homeTopbar: document.querySelector("#homeTopbar"),
   todayTitle: document.querySelector("#todayTitle"),
   homeProgressText: document.querySelector("#homeProgressText"),
@@ -43,7 +46,6 @@ var els = {
   speakExampleButton: document.querySelector("#speakExampleButton"),
   knownButton: document.querySelector("#knownButton"),
   unknownButton: document.querySelector("#unknownButton"),
-  speakButton: document.querySelector("#speakButton"),
   audioStatus: document.querySelector("#audioStatus"),
   donePanel: document.querySelector("#donePanel"),
   summaryText: document.querySelector("#summaryText"),
@@ -56,6 +58,14 @@ var els = {
   weeklyReviewButton: document.querySelector("#weeklyReviewButton"),
   weakReviewButton: document.querySelector("#weakReviewButton"),
   homeMistakeButton: document.querySelector("#homeMistakeButton"),
+  reviewTodayMistakesButton: document.querySelector("#reviewTodayMistakesButton"),
+  reviewDueButton: document.querySelector("#reviewDueButton"),
+  reviewWeeklyButton: document.querySelector("#reviewWeeklyButton"),
+  reviewWeakButton: document.querySelector("#reviewWeakButton"),
+  todayMistakeCountText: document.querySelector("#todayMistakeCountText"),
+  dueReviewCountText: document.querySelector("#dueReviewCountText"),
+  weeklyReviewCountText: document.querySelector("#weeklyReviewCountText"),
+  weakReviewCountText: document.querySelector("#weakReviewCountText"),
   settingsButton: document.querySelector("#settingsButton"),
   settingsPanel: document.querySelector("#settingsPanel"),
   closeSettingsButton: document.querySelector("#closeSettingsButton"),
@@ -67,6 +77,8 @@ var els = {
   notificationToggle: document.querySelector("#notificationToggle"),
   startListeningTestButton: document.querySelector("#startListeningTestButton"),
   startStoryButton: document.querySelector("#startStoryButton"),
+  listeningTestEntryButton: document.querySelector("#listeningTestEntryButton"),
+  listeningStoryEntryButton: document.querySelector("#listeningStoryEntryButton"),
   weeklyTestDueButton: document.querySelector("#weeklyTestDueButton"),
   testPanel: document.querySelector("#testPanel"),
   testTitleText: document.querySelector("#testTitleText"),
@@ -115,6 +127,8 @@ var learningAutoSpeakArmed = false;
 var settingsOpen = false;
 var test = { active: false, listening: false, showWord: true, title: "小测", questions: [], index: 0, score: 0, answered: false, completed: false, kind: "test" };
 var storyState = { active: false, storyIndex: 0, lineIndex: 0, showCn: false, playing: false, audio: null, playState: "idle" };
+var testReturnView = "home";
+var storyReturnView = "home";
 var panelHistoryActive = false;
 var activePanel = "";
 var currentAudio = null;
@@ -128,10 +142,10 @@ function bindEvents() {
   els.adjustPlanButton.addEventListener("click", openSettingsView);
   els.studyBackButton.addEventListener("click", closeStudyPanel);
   els.navHomeButton.addEventListener("click", openHomeView);
-  els.navStudyButton.addEventListener("click", startStudyEntry);
-  els.navListeningButton.addEventListener("click", openStoryPractice);
+  els.navStudyButton.addEventListener("click", openReviewCenter);
+  els.navListeningButton.addEventListener("click", openListeningCenter);
   els.navSettingsButton.addEventListener("click", openSettingsView);
-  els.homeMistakeButton.addEventListener("click", reviewMistakes);
+  els.homeMistakeButton.addEventListener("click", openReviewCenter);
   els.cardButton.addEventListener("click", function () {
     flipped = !flipped;
     renderCard();
@@ -149,7 +163,6 @@ function bindEvents() {
   });
   els.knownButton.addEventListener("click", function () { answer(true); });
   els.unknownButton.addEventListener("click", function () { answer(false); });
-  els.speakButton.addEventListener("click", speakCurrentWord);
   els.speakExampleButton.addEventListener("click", speakCurrentExample);
   els.speakExampleButton.addEventListener("keydown", function (event) {
     if (event.key === "Enter" || event.key === " ") {
@@ -162,6 +175,10 @@ function bindEvents() {
   els.listenTodayButton.addEventListener("click", startTodayListeningReview);
   els.weeklyReviewButton.addEventListener("click", startWeeklyReview);
   els.weakReviewButton.addEventListener("click", reviewWeakWords);
+  if (els.reviewTodayMistakesButton) els.reviewTodayMistakesButton.addEventListener("click", reviewMistakes);
+  if (els.reviewDueButton) els.reviewDueButton.addEventListener("click", startDueReview);
+  if (els.reviewWeeklyButton) els.reviewWeeklyButton.addEventListener("click", startWeeklyReview);
+  if (els.reviewWeakButton) els.reviewWeakButton.addEventListener("click", reviewWeakWords);
   els.settingsButton.addEventListener("click", toggleSettings);
   els.closeSettingsButton.addEventListener("click", closeSettings);
   els.dailyCountSelect.addEventListener("change", updateSettings);
@@ -172,6 +189,8 @@ function bindEvents() {
   els.notificationToggle.addEventListener("change", updateSettings);
   els.startListeningTestButton.addEventListener("click", startListeningTest);
   els.startStoryButton.addEventListener("click", openStoryPractice);
+  if (els.listeningTestEntryButton) els.listeningTestEntryButton.addEventListener("click", startListeningTest);
+  if (els.listeningStoryEntryButton) els.listeningStoryEntryButton.addEventListener("click", openStoryPractice);
   els.weeklyTestDueButton.addEventListener("click", startTest);
   els.closeTestButton.addEventListener("click", closeTest);
   els.speakTestButton.addEventListener("click", speakCurrentTestWord);
@@ -197,6 +216,7 @@ function loadState() {
     weeklyReviewThrough: "",
     lastWeeklyReviewIds: [],
     lastWeeklyReviewDate: "",
+    pendingWeeklyReview: null,
     activeReview: null
   };
   var saved = null;
@@ -222,11 +242,13 @@ function loadState() {
   saved.weeklyReviewThrough = saved.weeklyReviewThrough || "";
   saved.lastWeeklyReviewIds = saved.lastWeeklyReviewIds || [];
   saved.lastWeeklyReviewDate = saved.lastWeeklyReviewDate || "";
+  saved.pendingWeeklyReview = saved.pendingWeeklyReview && saved.pendingWeeklyReview.ids && saved.pendingWeeklyReview.ids.length ? saved.pendingWeeklyReview : null;
   saved.activeReview = saved.activeReview && saved.activeReview.ids && saved.activeReview.ids.length ? saved.activeReview : null;
   if (saved.activeReview) {
     saved.activeReview.answers = saved.activeReview.answers || {};
     saved.activeReview.type = saved.activeReview.type || "review";
     saved.activeReview.sourceThrough = saved.activeReview.sourceThrough || "";
+    saved.activeReview.remainingIds = saved.activeReview.remainingIds || [];
   }
   return saved;
 }
@@ -286,6 +308,36 @@ function openHomeView() {
   scrollToTop();
 }
 
+function openReviewCenter() {
+  pauseCurrentAudio();
+  if (test.active) closeTestPanel();
+  if (storyState.active) closeStoryPanel();
+  if (settingsOpen) closeSettingsPanel();
+  if (reviewMode) {
+    cancelReview();
+    return;
+  }
+  currentView = "review";
+  clearPanelHistory("study");
+  render();
+  scrollToTop();
+}
+
+function openListeningCenter() {
+  pauseCurrentAudio();
+  if (test.active) closeTestPanel();
+  if (storyState.active) closeStoryPanel();
+  if (settingsOpen) closeSettingsPanel();
+  if (reviewMode) {
+    cancelReview();
+    return;
+  }
+  currentView = "listening";
+  clearPanelHistory("study");
+  render();
+  scrollToTop();
+}
+
 function openSettingsView() {
   pauseCurrentAudio();
   if (test.active) closeTestPanel();
@@ -327,11 +379,23 @@ function buildSession() {
     else learned.push(word);
   }
 
+  due.sort(compareDailyReviewWords);
+  learned.sort(compareDailyReviewWords);
   var candidates = toTypedWords(due, "review").concat(toTypedWords(fresh, "new")).concat(toTypedWords(learned, "review"));
   var picked = candidates.slice(0, state.settings.dailyCount);
   state.days[today] = { ids: getTypedIds(picked), sources: getTypedSources(picked), answers: {}, completed: false };
   saveState();
   return mapTypedWords(picked);
+}
+
+function compareDailyReviewWords(a, b) {
+  var recordA = state.records[a.id] || { level: 0, reviewAfter: "", lastSeen: "" };
+  var recordB = state.records[b.id] || { level: 0, reviewAfter: "", lastSeen: "" };
+  var dueA = recordA.reviewAfter && recordA.reviewAfter <= today ? 0 : 1;
+  var dueB = recordB.reviewAfter && recordB.reviewAfter <= today ? 0 : 1;
+  if (dueA !== dueB) return dueA - dueB;
+  if ((recordA.level || 0) !== (recordB.level || 0)) return (recordA.level || 0) - (recordB.level || 0);
+  return String(recordA.lastSeen || "").localeCompare(String(recordB.lastSeen || ""));
 }
 
 function getIds(words) {
@@ -386,6 +450,7 @@ function render() {
   renderSettings();
   renderLearningOverview();
   renderWeeklyPanel();
+  renderReviewCenter();
   renderMode();
   renderCard();
   renderTest();
@@ -398,10 +463,14 @@ function renderMode() {
   var day = state.days[today];
   var dailyDone = !!(day && day.completed);
   var homeVisible = !testOpen && !storyOpen && !settingsOpen && !reviewMode && currentView === "home";
+  var reviewVisible = !testOpen && !storyOpen && !settingsOpen && !reviewMode && currentView === "review";
+  var listeningVisible = !testOpen && !storyOpen && !settingsOpen && !reviewMode && currentView === "listening";
   var studyVisible = !testOpen && !storyOpen && !settingsOpen && (reviewMode || currentView === "study");
   var bottomVisible = !testOpen && !storyOpen && !studyVisible;
 
   toggleHidden(els.homeView, !homeVisible);
+  toggleHidden(els.reviewCenter, !reviewVisible);
+  toggleHidden(els.listeningCenter, !listeningVisible);
   if (els.homeView) els.homeView.classList.toggle("day-complete", dailyDone);
   toggleHidden(els.studyView, !studyVisible);
   toggleHidden(els.weeklyReviewPanel, !homeVisible || (!isWeeklyReviewDue() && !isTestDue()));
@@ -423,7 +492,7 @@ function renderNav() {
   if (!els.bottomNav) return;
   var active = settingsOpen ? "settings" : currentView;
   els.navHomeButton.classList.toggle("active", active === "home");
-  els.navStudyButton.classList.toggle("active", active === "study");
+  els.navStudyButton.classList.toggle("active", active === "review");
   els.navListeningButton.classList.toggle("active", active === "listening");
   els.navSettingsButton.classList.toggle("active", active === "settings");
 }
@@ -543,6 +612,7 @@ function startChoiceTest(pool, listening, title, kind) {
   pauseStoryAudio();
   closeStoryPanel();
   closeSettingsPanel();
+  testReturnView = kind === "listening" ? "listening" : "home";
   currentView = listening ? "listening" : "home";
   test = { active: true, listening: listening, showWord: !listening, title: title, questions: [], index: 0, score: 0, answered: false, completed: false, kind: kind || "test" };
   pushPanelHistory("test");
@@ -564,13 +634,14 @@ function closeTestPanel() {
   test.active = false;
   test.completed = false;
   clearPanelHistory("test");
-  currentView = "home";
+  currentView = testReturnView || "home";
   render();
   scrollToTop();
 }
 
 function openStoryPractice() {
   if (!window.LISTENING_STORIES || !window.LISTENING_STORIES.length) return;
+  storyReturnView = currentView === "listening" ? "listening" : "home";
   pauseCurrentAudio();
   closeTestPanel();
   closeSettingsPanel();
@@ -594,7 +665,7 @@ function closeStoryPanel() {
   pauseStoryAudio();
   storyState.active = false;
   clearPanelHistory("story");
-  currentView = "home";
+  currentView = storyReturnView || "home";
   render();
   scrollToTop();
 }
@@ -983,6 +1054,27 @@ function renderLearningOverview() {
   }
 }
 
+function renderReviewCenter() {
+  var todayMistakes = getTodayNeedsReviewIds();
+  var dueIds = getDueReviewIds();
+  var weeklySource = getWeeklyReviewSource();
+  var weeklyIds = getWeeklyReviewPendingIds(weeklySource);
+  var weakIds = getWeakWordIds();
+  updateReviewOption(els.reviewTodayMistakesButton, els.todayMistakeCountText, todayMistakes.length, "复习今日错词");
+  updateReviewOption(els.reviewDueButton, els.dueReviewCountText, dueIds.length, "复习到期词");
+  updateReviewOption(els.reviewWeeklyButton, els.weeklyReviewCountText, weeklyIds.length, state.pendingWeeklyReview && state.pendingWeeklyReview.ids && state.pendingWeeklyReview.ids.length ? "继续本周复习" : "开始本周复习");
+  updateReviewOption(els.reviewWeakButton, els.weakReviewCountText, weakIds.length, "复习薄弱词");
+}
+
+function updateReviewOption(button, countElement, count, activeText) {
+  if (countElement) countElement.textContent = count ? count + " 个" : "暂无";
+  if (!button) return;
+  button.disabled = !count;
+  button.classList.toggle("disabled", !count);
+  var title = button.querySelector("strong");
+  if (title && activeText) title.textContent = count ? activeText : title.getAttribute("data-empty") || title.textContent;
+}
+
 function countLearnedWords(words) {
   var count = 0;
   for (var i = 0; i < words.length; i += 1) {
@@ -1082,11 +1174,11 @@ function renderTestComplete() {
   var closeButton = document.createElement("button");
   closeButton.className = "primary full";
   closeButton.type = "button";
-  closeButton.textContent = test.kind === "listening" ? "回到听力练习" : "回到首页";
+  closeButton.textContent = test.kind === "listening" ? "回到听力" : "回到首页";
   closeButton.addEventListener("click", function () {
     if (test.kind === "listening") {
       closeTestPanel();
-      openStoryPractice();
+      openListeningCenter();
     } else {
       closeTest(false);
     }
@@ -1241,10 +1333,19 @@ function forceAutoSpeak(key, text) {
 function reviewMistakes() {
   var wrongIds = getTodayNeedsReviewIds();
   if (!wrongIds.length) {
-    renderCard();
+    renderReviewCenter();
     return;
   }
   startReview(wrongIds, "mistakes");
+}
+
+function startDueReview() {
+  var dueIds = getDueReviewIds().slice(0, REVIEW_BATCH_SIZE);
+  if (!dueIds.length) {
+    renderReviewCenter();
+    return;
+  }
+  startReview(dueIds, "due");
 }
 
 function getTodayWrongIds() {
@@ -1303,7 +1404,14 @@ function reviewTodayWords() {
 
 function startWeeklyReview() {
   var source = getWeeklyReviewSource();
-  startReview(prioritizeReviewIds(source.ids), "weekly", { sourceThrough: source.through });
+  var ids = getWeeklyReviewPendingIds(source);
+  var batch = ids.slice(0, REVIEW_BATCH_SIZE);
+  var remaining = ids.slice(REVIEW_BATCH_SIZE);
+  if (!batch.length) {
+    renderReviewCenter();
+    return;
+  }
+  startReview(batch, "weekly", { sourceThrough: source.through, remainingIds: remaining });
 }
 
 function reviewWeakWords() {
@@ -1323,7 +1431,8 @@ function startReview(ids, type, options) {
     ids: getIds(session),
     answers: {},
     started: today,
-    sourceThrough: options && options.sourceThrough ? options.sourceThrough : ""
+    sourceThrough: options && options.sourceThrough ? options.sourceThrough : "",
+    remainingIds: options && options.remainingIds ? uniqueIds(options.remainingIds) : []
   };
   state.activeReview = reviewSession;
   index = 0;
@@ -1337,9 +1446,14 @@ function startReview(ids, type, options) {
 function finishReview() {
   var finished = reviewSession;
   if (finished && finished.type === "weekly" && finished.sourceThrough) {
-    state.weeklyReviewThrough = finished.sourceThrough;
-    state.lastWeeklyReviewIds = finished.ids.slice();
+    state.lastWeeklyReviewIds = uniqueIds((state.lastWeeklyReviewIds || []).concat(finished.ids));
     state.lastWeeklyReviewDate = today;
+    if (finished.remainingIds && finished.remainingIds.length) {
+      state.pendingWeeklyReview = { ids: finished.remainingIds.slice(), sourceThrough: finished.sourceThrough };
+    } else {
+      state.pendingWeeklyReview = null;
+      state.weeklyReviewThrough = finished.sourceThrough;
+    }
   }
   state.activeReview = null;
   reviewSession = null;
@@ -1395,8 +1509,19 @@ function getTodayIds() {
   return state.days[today] && state.days[today].ids ? state.days[today].ids : [];
 }
 
+function getDueReviewIds() {
+  var ids = [];
+  var wordPool = getSelectedWords();
+  for (var i = 0; i < wordPool.length; i += 1) {
+    var record = state.records[wordPool[i].id];
+    if (record && record.reviewAfter && record.reviewAfter <= today) ids.push(wordPool[i].id);
+  }
+  return prioritizeReviewIds(ids);
+}
+
 function renderWeeklyPanel() {
   var source = getWeeklyReviewSource();
+  var weeklyIds = getWeeklyReviewPendingIds(source);
   var reviewDue = isWeeklyReviewDue();
   var testDue = isTestDue();
   var weakCount = getWeakWordIds().length;
@@ -1405,6 +1530,9 @@ function renderWeeklyPanel() {
     els.weeklyReviewSummary.textContent = reviewDue
       ? "这段时间学了 " + source.ids.length + " 个词，先完整复习一遍，再做小测。"
       : "已经完成一轮学习，做一次小测看看掌握得怎么样。";
+  }
+  if (els.weeklyReviewSummary && reviewDue) {
+    els.weeklyReviewSummary.textContent = "这段时间有 " + weeklyIds.length + " 个词待复习，每次先复习 " + Math.min(REVIEW_BATCH_SIZE, weeklyIds.length) + " 个。";
   }
   toggleHidden(els.weeklyReviewButton, !reviewDue);
   if (els.weakReviewButton) {
@@ -1427,8 +1555,17 @@ function getWeeklyReviewSource() {
   return { days: days, ids: uniqueIds(ids), through: days.length ? days[days.length - 1] : "" };
 }
 
+function getWeeklyReviewPendingIds(source) {
+  var pending = state.pendingWeeklyReview;
+  if (pending && pending.sourceThrough === source.through && pending.ids && pending.ids.length) {
+    return prioritizeReviewIds(pending.ids);
+  }
+  return prioritizeReviewIds(source.ids);
+}
+
 function isWeeklyReviewDue() {
-  return getWeeklyReviewSource().days.length >= state.settings.testInterval;
+  var source = getWeeklyReviewSource();
+  return !!(state.pendingWeeklyReview && state.pendingWeeklyReview.ids && state.pendingWeeklyReview.ids.length) || source.days.length >= state.settings.testInterval;
 }
 
 function getCompletedDayKeysAfter(dateKey) {
@@ -1496,6 +1633,7 @@ function getReviewLabel() {
   if (!reviewSession) return "复习进度";
   if (reviewSession.type === "weekly") return "本周复习";
   if (reviewSession.type === "weak") return "弱项复习";
+  if (reviewSession.type === "due") return "到期复习";
   if (reviewSession.type === "mistakes") return "错词复习";
   return "今日复习";
 }
@@ -1526,3 +1664,5 @@ function registerServiceWorker() {
     navigator.serviceWorker.register("sw.js").catch(function () {});
   }
 }
+
+
